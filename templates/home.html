@@ -1,26 +1,10 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Jon's Blog</h2>
-</br>
-<form method ='post'>
-  <label>
-    Title
-    <input type = 'text' name = 'title' value = '{{title}}'/>
-  </label>
-</br>
-</br>
-<label>
-  Message
-  <textarea name = 'message' value ='{{ message }}'></textarea>
-</label>
-</br>
-<input type = 'submit' name ='Submit' />
-<div class ='error'><strong>{{error}}</strong>  </div>
-</form>
 
-<hr/>
-
+<h2>/Jon's Blog/</h2>
+</br>
+<div class = 'col-lg-4'>
 {% for post in posts %}
 <div class = "post">
 <div class = 'post-title'>
@@ -40,5 +24,31 @@
 {{message}}
 </p>
 {% endfor %}
+</div>
+
+<div class= 'col-lg-8'>
+<form method ='post'>
+  <label>
+  <div class='new-title'>
+    Title
+  </div>
+  </br>
+    <input type = 'text' name = 'title' value = '{{title}}'/>
+  </label>
+</br>
+</br>
+<label>
+  <div class ='new-message'>
+      Message
+  </div>
+
+</br>
+  <textarea name = 'message' value ='{{ message }}'></textarea>
+</label>
+</br>
+<input type = 'submit' name ='Submit' />
+<div class ='error'><strong>{{error}}</strong>  </div>
+</form>
+</div>
 
 {% endblock %}

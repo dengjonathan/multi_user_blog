@@ -1,0 +1,39 @@
+body {
+  font-family: monospace sans-serif;
+  width: 800px;
+  margin: 0 auto;
+  padding: 5px;
+}
+
+.error {
+  color: red;
+}
+
+textarea {
+  width: 400px;
+  height: 300px;
+  font-size: 20px;
+}
+
+hr {
+  margin: 30px auto;
+}
+
+.post-title {
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.post-message {
+  font-size: 15px;
+}
+
+.new-title {
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.new-message {
+  font-weight: bold;
+  font-size: 20px;
+}
