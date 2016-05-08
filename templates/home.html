@@ -1,56 +1,44 @@
-{% extends 'base.html' %}
-
-{% block content %}
+{% extends 'base.html' %} {% block content %}
 
 <h2>/Jon's Blog/</h2>
 <h4>You have been here {{visits}} times!</h4>
 <h4>{{congrats}}</h4>
-</br>
-<div class = 'col-lg-4'>
-{% for post in posts %}
-<div class = "post">
-<div class = 'post-title'>
-  {{post.title}}
-</div>
-<div class = 'post-message'>
-  {{post.message}}
-</div>
-<div class = 'created_at'>
-  {{post.created_at}}
-</div>
-</div>
-<p>
-{{title}}
-</p>
-<p>
-{{message}}
-</p>
-{% endfor %}
-</div>
-
-<div class= 'col-lg-8'>
-<form method ='post'>
-  <label>
-  <div class='new-title'>
-    Title
-  </div>
-  </br>
-    <input type = 'text' name = 'title' value = '{{title}}'/>
-  </label>
-</br>
-</br>
-<label>
-  <div class ='new-message'>
-      Message
-  </div>
 
 </br>
-  <textarea name = 'message' value ='{{ message }}'></textarea>
-</label>
-</br>
-<input type = 'submit' name ='Submit' />
-<div class ='error'><strong>{{error}}</strong>  </div>
-</form>
-</div>
+<div class='posts col-lg-12'>
+    {% for post in posts %}
+    <div class="post">
+        <div class='post-title'>
+            {{post.title}}
+        </div>
+        <div class='post-message'>
+            {{post.message}}
+        </div>
+        <div class='created_at'>
+            {{post.created_at}}
+        </div>
 
+        <div class='social-buttons row'>
+            <div class='likes'>
+                Likes {{post.likes}}
+            </div>
+            <div class='comments'>
+                Comments {{post.comments}}
+                </br>
+                New Comment
+                <form method='post'>
+                    <input name="comment" type='text'></input>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+    <p>
+        {{title}}
+    </p>
+    <p>
+        {{message}}
+    </p>
+    {% endfor %}
+</div>
 {% endblock %}

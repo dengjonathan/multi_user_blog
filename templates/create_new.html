@@ -1,0 +1,27 @@
+
+<div class= 'col-lg-8'>
+<form method ='post'>
+  <label>
+  <div class='new-title'>
+    Title
+  </div>
+  </br>
+    <input type = 'text' name = 'title' value = '{{title}}'/>
+  </label>
+</br>
+</br>
+<label>
+  <div class ='new-message'>
+      Message
+  </div>
+
+</br>
+  <textarea name = 'message' value ='{{ message }}'></textarea>
+</label>
+</br>
+<input type = 'submit' name ='Submit' />
+<div class ='error'><strong>{{error}}</strong>  </div>
+</form>
+</div>
+
+{% endblock %}

@@ -1,14 +1,38 @@
 <html>
+
 <head>
-<!--  Multi-user-blog App -->
+    <!--  Multi-user-blog App -->
 
-  <link type = 'text/css' rel='stylesheet' href='/stylesheets/main.css' />
+    <link type='text/css' rel='stylesheet' href='/stylesheets/main.css' />
 
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 </head>
 
 <body>
-  {% block content %}
-  {% endblock %}
+    <div class='navbar navbar-inverse navbar-fixed-top'>
+        <div class='navbar-brand'>
+            /Jon's Blog/
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li><a href="/">Home</a></li>
+                <li><a href="/newpost">New Post</a></li>
+                {% if session['username'] %}
+                <li><a href="/profile">Logged In as {{session['username']}}</a></li>
+                <li><a href='/signout'>Logout</a></li>
+                {% else %}
+                <li><a href='/signout'>Login</a></li>
+                <li><a href='/signout'>Register</a></li>
+                {% endif %}
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li class="active">You are logged in as {{session['username']}}</li>
+            </ul>
+        </div>
+    </div>
+  </br>
+  </br>
+    {% block content %} {% endblock %}
 </body>
+
 </html>
