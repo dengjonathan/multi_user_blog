@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form method = 'post'>
+  <label>
+    Name
+    <input type='text' name='username' value="{{ params['username'] }}">
+    <div class = 'error'>{{error['username']}}</div>
+  </label>
+</br>
+  <label>
+    Password
+    <input type='password' name='password'>
+    <div class = 'error'>{{error['password']}}</div>
+  </label>
+</br>
+  <label>
+    Re-type Password
+    <input type ="password" name='password_check' />
+    <div class = 'error'>{{error['password_check']}}</div>
+  </label>
+</br>
+  <label>
+    Email (Optional)
+  <input type = 'email' name='email' value= '{{ params["email"] }}'/>
+  <div class = 'error'>{{error['email']}}</div>
+  </label>
+</br>
+  <input type = 'submit' name='submit' />
+</br>
+</form>
+
+
+{% endblock %}
