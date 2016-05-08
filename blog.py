@@ -1,7 +1,7 @@
 import os
 import re
 from string import letters
-import hashlib
+import hmac
 
 import webapp2
 import jinja2
@@ -12,10 +12,13 @@ template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
                                autoescape=True)
 
+with open('secrets.txt') as secret:
+    CLIENT_SECRET = secret.read().strip()
+
 # hash functions
 def hash_str(s):
     s = str(s)
-    return hashlib.sha256(s).hexdigest()
+    return hmac.new(CLIENT_SECRET, s).hexdigest()
 
 def make_secure_val(s):
     """given a string value, returns string and sha256 hash in tuple form"""
@@ -58,9 +61,9 @@ class MainPage(BaseHandler):
             if visits:
                 visits = int(visits) + 1
             else:
-                visits = 0
+                visits = 1
         else:
-            visits = 0
+            visits = 1
         visits_cookie = make_secure_val(visits)
         self.response.headers.add_header('Set-Cookie',
                                          'visits=%s;' % visits_cookie)
