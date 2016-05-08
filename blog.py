@@ -5,12 +5,13 @@ import hmac
 import hashlib
 import random
 # import bcrypt
-
 import webapp2
 import jinja2
 
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 from webapp2_extras import sessions
+
+import database_classes as dbc
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
@@ -41,7 +42,7 @@ def hash_str(s):
 
 def make_secure_val(s):
     """given a string value, returns string and sha256 hash in tuple form"""
-    return '%s%s' % (s, hash_str(s))
+    return '%s|%s' % (s, hash_str(s))
 
 def check_secure_value(h):
     """
@@ -66,16 +67,16 @@ def make_salt(n):
 
 def make_pw_hash(name, pw, salt=None):
     """
-    returns hash of name and password using salt
-    of five random alpanumeric chars
+    returns hash of name and password with salt of 5 random alpanumeric chars
+    User can specify own salt, default is randomly generated
     """
     if not salt:
         salt = make_salt(5)
     hash = hashlib.sha256(name + pw + salt).hexdigest()
-    return '%s,%s' % (hash, salt)
+    return '%s|%s' % (hash, salt)
 
 def valid_password(name, pw, hash):
-    hash = hash.split(',')
+    hash = hash.split('|')
     salt = hash[1]
     if make_pw_hash(name, pw, salt=salt) == hash:
         return True
@@ -129,8 +130,8 @@ class MainPage(BaseHandler):
         visits_cookie = make_secure_val(visits)
         self.response.headers.add_header('Set-Cookie',
                                          'visits=%s;' % visits_cookie)
-
-        posts = db.GqlQuery('SELECT * FROM Post ORDER BY created_at DESC')
+        # change query to ndb query
+        posts = dbc.Post.query().order(-dbc.Post.created_at)
         if visits > 100:
             self.render('home.html', posts=posts, visits=visits,
                         congrats='Congrats, you\'re a power user!')
@@ -141,7 +142,10 @@ class MainPage(BaseHandler):
         title = self.request.get('title')
         message = self.request.get('message')
         if title and message:
-            a = Post(title=title, message=message)
+            a = dbc.Post(title=title,
+                         message=message,
+                         username=self.session['username']
+                         )
             a.put()
             self.redirect('/')
         else:
@@ -151,7 +155,7 @@ class MainPage(BaseHandler):
 class Welcome(BaseHandler):
 
     def get(self):
-        username = self.session['username']
+        username = self.session.get('username')
         self.render('welcome.html', username=username)
 
 class Signup(BaseHandler):
@@ -179,14 +183,44 @@ class Signup(BaseHandler):
         if error:
             self.render('signup.html', error=error, params=params)
         else:
+            self.session['username'] = username
+            n = dbc.User(username=username,
+                         password=make_pw_hash(username, password),
+                         email=email)
+            n.put()
             self.redirect('/welcome')
 
-# database classes
 
-class Post(db.Model):
-    title = db.StringProperty(required=True)
-    message = db.TextProperty()
-    created_at = db.DateTimeProperty(auto_now_add=True)
+class Login(BaseHandler):
+
+    def get(self):
+        self.render('login.html', error='', username='')
+
+    def post(self):
+        username = self.request.get('username')
+        password = self.request.get('password')
+        user = dbc.User.query().filter(dbc.User.username==username).fetch(1)[0]
+        print '### %s' % user
+        if user:
+            print '### password %s' % user.password
+            given_password = make_pw_hash(
+                                          username, password,
+                                          salt=user.password.split('|')[1]
+                                          )
+            if user.password == given_password:
+                self.session['username'] = username
+                self.session['email'] = user.email
+                return self.redirect('/welcome')
+        self.render('login.html', username=username,
+                    error='Incorrect username/ password combo')
+
+class TestPage(BaseHandler):
+
+    def get(self):
+        session = self.session
+        users = dbc.User.query()
+        posts = dbc.Post.query()
+        self.render('testpage.html', users=users, posts=posts, session=session)
 
 config = {}
 config['webapp2_extras.sessions'] = {
@@ -195,6 +229,8 @@ config['webapp2_extras.sessions'] = {
 
 app = webapp2.WSGIApplication([('/', MainPage),
                                ('/welcome', Welcome),
-                               ('/signup', Signup)],
+                               ('/signup', Signup),
+                               ('/test', TestPage),
+                               ('/login', Login)],
                               config=config,
                               debug=True)

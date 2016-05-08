@@ -1,0 +1,26 @@
+<h1>Session Variables</h1>
+{{session['username']}}
+
+<h1>Users</h1>
+{% for user in users %}
+{{user.username}}
+</br>
+{{user.password}}
+</br>
+{{user.email}}
+</br>
+{{user.account_created}}
+</br>
+{% endfor %}
+
+<h1>Posts</h1>
+{% for post in posts %}
+{{post.title}}
+</br>
+{{post.message}}
+</br>
+{{post.created_at}}
+</br>
+{{post.username}}
+</br>
+{% endfor %}
