@@ -1,13 +1,15 @@
 {% extends 'base.html' %} {% block content %}
 
-<h2>/Jon's Blog/</h2>
 <h4>You have been here {{visits}} times!</h4>
 <h4>{{congrats}}</h4>
-
+<h1>Likes: {{likes}}</h1>
 </br>
-<div class='posts col-lg-12'>
+
+<div class='posts'>
+
     {% for post in posts %}
-    <div class="post">
+
+    <div class="post col-lg-12">
         <div class='post-title'>
             {{post.title}}
         </div>
@@ -18,9 +20,10 @@
             {{post.created_at}}
         </div>
 
-        <div class='social-buttons row'>
+        <div class='social-buttons'>
             <div class='likes'>
-                Likes {{post.likes}}
+                Likes
+                <button class='btn-primary' href = '/like'>Like</button>
             </div>
             <div class='comments'>
                 Comments {{post.comments}}
@@ -32,7 +35,7 @@
             </div>
         </div>
     </div>
-</div>
+
     <p>
         {{title}}
     </p>
