@@ -7,6 +7,7 @@ import random
 # import bcrypt
 import webapp2
 import jinja2
+import json
 
 from google.appengine.ext import ndb
 from webapp2_extras import sessions
@@ -120,20 +121,23 @@ class MainPage(BaseHandler):
         self.render('home.html', posts=posts, session=self.session)
 
     def post(self):
+        print '### request', self.request.get('like')
         key = self.request.get('key')
         # convert key to integer in KeyProperty
         key = int(key.split(',')[1][:-1])
         post = ndb.Key('Post', key).get()
         if self.request.get('like'):
             post.likes += 1
+            post.put()
+            json_string = {'likes': post.likes}
+            self.write(json.dumps(json_string))
         if self.request.get('comment'):
             comment = self.request.get('comment')
-            n = Comment(username=self.session['username'],
+            n = dbc.Comment(username=self.session['username'],
                         comment=comment)
             post.comments.append(n)
-        post.put()
-        self.redirect('/')
-
+            post.put()
+            return {'comment': comment}
 
 class Welcome(BaseHandler):
 

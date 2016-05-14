@@ -1,10 +1,4 @@
 {% extends 'base.html' %} {% block content %}
-
-<p class='like-num'>45</p>
-<p></p>
-<p></p>
-</br>
-
 <div class='posts'>
 
     {% for post in posts %}
@@ -41,6 +35,7 @@
                 <div class ='new_comment'>
                 <form method='post'>
                     <input name="comment" type='text'>
+                    <input type='hidden' name='key' value='{{post.key}}' />
                     <button class="new_comment" id='{{post.key}}'>New Comment</button>
                 </form>
                   </div>
@@ -63,38 +58,48 @@
     $('button.like-btn').click(function() {
         var post_id = this.id;
         console.log(post_id);
+        $.post('/',
+          {
+            'key' : post_id,
+            'like': true
+          }).done(function(response){
+            response = $.parseJSON(response);
+            var selector = '#' + post_id + '.likes';
+            $(selector).text(response['likes']);
+          }).fail(function(){
+            alert('Failed to reach server')
+          });
 
-        console.log(post_id);
-        $.ajax({
-                url: '/',
-                data: {
-                    key: post_id,
-                    like: true
-                },
-                type: 'POST',
-                dataType: JSON,
-                success: function(json){
-                    $('div.likes').text(json);
-                    console.log('hello');
-                },
-                error: function() {
-                    console.log('Sorry there was a problem');
-                },
-                complete: function() {
-                    console.log('Ajax call complete');
-                    //for some reason jquery not liking my selector by Key of the post
-                    //var selector = (post_id).toString();
-                    console.log(selector);
-                    console.log($(selector).text());
-                }
-            })
+
+        // $.ajax({
+        //         url: '/',
+        //         data: {
+        //             key: post_id,
+        //             like: true
+        //         },
+        //         type: 'POST',
+        //         dataType: JSON,
+        //         error: function() {
+        //             console.log('Sorry there was a problem');
+        //         },
+        //         complete: function(response) {
+        //             console.log('Ajax call complete');
+        //             console.log(response);
+        //             //var selector = (post_id).toString();
+        //             //console.log(selector);
+        //           //  console.log($(selector).text());
+        //         }
+        //     })
         });
-        $('button.new_comment').click(function() {
-            var post_id = this.id;
-            console.log(post_id);
-            var comment = $('div.new_comment input:text').val();
-            console.log(comment);
-        });
+      $('button.new_comment').click(function() {
+          var post_id = this.id;
+          var comment = $('div.new_comment input:text').val();
+          console.log(comment);
+          // Todo this is definitely not right
+          // $('div.comments').append('<li>' + {{session['username']}} + ' says'
+          //   + comment + '</li>')
+          return false;
+      });
             // $.ajax({
             //         url: '/',
             //         data: {
