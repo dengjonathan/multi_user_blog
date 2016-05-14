@@ -116,52 +116,37 @@ class BaseHandler(webapp2.RequestHandler):
 class MainPage(BaseHandler):
 
     def get(self):
-        # get cookies showing how many visits
-        visits_cookie = self.request.cookies.get('visits')
-        # set new cookie showing a new visits
-        if visits_cookie:
-            visits = check_secure_value(visits_cookie)
-            if visits:
-                visits = int(visits) + 1
-            else:
-                visits = 1
-        else:
-            visits = 1
-        visits_cookie = make_secure_val(visits)
-        self.response.headers.add_header('Set-Cookie',
-                                         'visits=%s;' % visits_cookie)
-        # change query to ndb query
         posts = dbc.Post.query().order(-dbc.Post.created_at)
-        if visits > 100:
-            self.render('home.html', posts=posts, visits=visits,
-                        congrats='Congrats, you\'re a power user!')
-        else:
-            self.render('home.html', posts=posts, visits=visits)
+        self.render('home.html', posts=posts, session=self.session)
 
     def post(self):
-        title = self.request.get('title')
-        message = self.request.get('message')
-        if title and message:
-            a = dbc.Post(title=title,
-                         message=message,
-                         username=self.session['username']
-                         )
-            a.put()
-            self.redirect('/')
-        else:
-            self.render('home.html', title=title, message=message,
-                        error="You need to enter both title and message!")
+        key = self.request.get('key')
+        # convert key to integer in KeyProperty
+        key = int(key.split(',')[1][:-1])
+        post = ndb.Key('Post', key).get()
+        if self.request.get('like'):
+            post.likes += 1
+        if self.request.get('comment'):
+            comment = self.request.get('comment')
+            n = Comment(username=self.session['username'],
+                        comment=comment)
+            post.comments.append(n)
+        post.put()
+        self.redirect('/')
+
 
 class Welcome(BaseHandler):
 
     def get(self):
         username = self.session.get('username')
-        self.render('welcome.html', username=username)
+        self.render('welcome.html', username=username, session=self.session)
 
 class Signup(BaseHandler):
 
     def get(self):
-        self.render('signup.html', params=None, error=None)
+        error=self.request.get('error')
+        self.render('signup.html', params=None,
+                    error=error, session=self.session)
 
     def post(self):
         username = self.request.get('username')
@@ -181,7 +166,8 @@ class Signup(BaseHandler):
             if not valid_email(email):
                 error['email'] = 'Enter valid email address'
         if error:
-            self.render('signup.html', error=error, params=params)
+            self.render('signup.html', error=error,
+                        params=params, session=self.session)
         else:
             self.session['username'] = username
             n = dbc.User(username=username,
@@ -194,15 +180,22 @@ class Signup(BaseHandler):
 class Login(BaseHandler):
 
     def get(self):
-        self.render('login.html', error='', username='')
+        self.render('login.html', error='', username='', session=self.session)
 
     def post(self):
+        """
+        Takes username and password from html form and checks to ensure
+        username is in database and hashed password
+        matches password stored in database
+        """
+        # Todo not sure what this below logic is trying to accomplish
+        # if not self.session['username']:
+        #     return self.redirect('/signup?error')
         username = self.request.get('username')
         password = self.request.get('password')
-        user = dbc.User.query().filter(dbc.User.username==username).fetch(1)[0]
-        print '### %s' % user
-        if user:
-            print '### password %s' % user.password
+        user_query = dbc.User.query().filter(dbc.User.username==username)
+        if user_query.fetch():
+            user = user_query.fetch(1)[0]
             given_password = make_pw_hash(
                                           username, password,
                                           salt=user.password.split('|')[1]
@@ -211,11 +204,80 @@ class Login(BaseHandler):
                 self.session['username'] = username
                 self.session['email'] = user.email
                 return self.redirect('/welcome')
-        self.render('login.html', username=username,
+        return self.render('login.html', username=username, session=self.session,
                     error='Incorrect username/ password combo')
 
-class TestPage(BaseHandler):
 
+class Logout(BaseHandler):
+    def get(self):
+        self.render('logout.html', error='', username='', session=self.session)
+
+    def post(self):
+        if self.session['username']:
+            self.session['username'] = ''
+            self.session['email'] = ''
+            self.redirect('/')
+        else:
+            self.render('login.html', username=username,
+                        error='You were never logged in to being with!',
+                        session=self.session)
+
+class NewPost(BaseHandler):
+    def get(self):
+        if not 'username' in self.session:
+            error = 'You need to login or signup to post!'
+            return self.redirect('/signup?error=' + error)
+        return self.render('create_new.html', session=self.session, error='')
+
+    def post(self):
+        title = self.request.get('title')
+        num = self.request.get('like')
+        print "### %s" % num
+        message = self.request.get('message')
+        if title and message:
+            comment = dbc.Comment(username='jon', comment='Nice Post!')
+            a = dbc.Post(title=title,
+                         message=message,
+                         username=self.session['username'],
+                         comments=[comment]
+                         )
+            a.put()
+            self.redirect('/')
+        else:
+            self.render('home.html', title='', message='', congrats='Hello!',
+                        error="You need to enter both title and message!",
+                        session=self.session, num=num)
+
+class Article(BaseHandler):
+    def get(self):
+        #todo get key from parameter sent to article handler
+        key = self.get.request['key']
+        post = dbc.Post.query().filter(Post.key==key)
+        self.render('article.html', session=self.session)
+
+    def post(self):
+        title = self.request.get('comment')
+        username = self.session.get('username')
+        if title and username:
+            a = dbc.Comment(comment=comment,
+                            username=username
+                           )
+            a.put()
+        else:
+            print 'Error Comment not inserted.'
+
+
+class Profile(BaseHandler):
+    def get(self):
+        username = self.session['username']
+        user = dbc.User.query().filter(dbc.User.username==username).fetch(1)[0]
+        posts = dbc.Post.query().filter(dbc.Post.username==username).fetch()
+        num_posts = len(posts)
+        self.render('profile.html', user=user,
+                    posts=posts, num_posts=num_posts, session=self.session)
+
+
+class TestPage(BaseHandler):
     def get(self):
         session = self.session
         users = dbc.User.query()
@@ -224,13 +286,17 @@ class TestPage(BaseHandler):
 
 config = {}
 config['webapp2_extras.sessions'] = {
-    'secret_key': CLIENT_SECRET,
+    'secret_key': CLIENT_SECRET
 }
 
 app = webapp2.WSGIApplication([('/', MainPage),
                                ('/welcome', Welcome),
                                ('/signup', Signup),
                                ('/test', TestPage),
-                               ('/login', Login)],
+                               ('/login', Login),
+                               ('/newpost', NewPost),
+                               ('/logout', Logout),
+                               ('/article', Article),
+                               ('/profile', Profile)],
                               config=config,
                               debug=True)

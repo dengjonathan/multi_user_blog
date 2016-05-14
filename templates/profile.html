@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Username: {{user.username}}</h2>
+
+<h3>Member since {{user.account_created}}</h3>
+
+<h3>You have posted {{num_posts}} posts!</h3>
+
+<ul>
+  {% for post in posts %}
+<li>
+  <a href ="/">{{post.title}}</a>
+  <p>
+    {{post.message}}
+  </p>
+  <a>Likes {{post.likes}}</a>
+</br>
+<ul>
+  {% for comment in post.comments %}
+  <li>
+   {{comment.username}} says {{comment.comment}}!
+  </li>
+  {% endfor %}
+</ul>
+
+</li>
+  {% endfor %}
+</ul>
+{% endblock %}

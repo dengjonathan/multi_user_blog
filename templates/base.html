@@ -6,12 +6,13 @@
     <link type='text/css' rel='stylesheet' href='/stylesheets/main.css' />
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
 </head>
 
 <body>
     <div class='navbar navbar-inverse navbar-fixed-top'>
         <div class='navbar-brand'>
-            /Jon's Blog/
+            SUPdate
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
@@ -30,6 +31,9 @@
   </br>
   </br>
 </br>
+<p class='error'>
+  {{error}}
+</p>
     {% block content %} {% endblock %}
 </body>
 

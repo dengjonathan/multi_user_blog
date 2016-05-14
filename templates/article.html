@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{{post.title}}</h2>
+</br>
+</br>
+<h4>{{post.user_id}}</h4>
+<ul>
+  <li>
+    {{post.message}}
+  </li>
+  <li>
+    {{post.likes}}
+  </li>
+  <li>
+    {{post.comments}}
+  </li>
+</ul>
+
+<form method = 'post'>
+  <textarea name='comment'></textarea>
+  <input type = 'submit' name'Submit comment'>
+  <btn type='btn-primary' id='Like'>Like</btn>
+</form>
+
+
+{% endblock %}

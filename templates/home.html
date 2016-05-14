@@ -1,8 +1,8 @@
 {% extends 'base.html' %} {% block content %}
 
-<h4>You have been here {{visits}} times!</h4>
-<h4>{{congrats}}</h4>
-<h1>Likes: {{likes}}</h1>
+<p class='like-num'>45</p>
+<p></p>
+<p></p>
 </br>
 
 <div class='posts'>
@@ -11,7 +11,7 @@
 
     <div class="post col-lg-12">
         <div class='post-title'>
-            {{post.title}}
+            <a href='/article?key={{post.key}}'>{{post.title}}</a>
         </div>
         <div class='post-message'>
             {{post.message}}
@@ -21,17 +21,29 @@
         </div>
 
         <div class='social-buttons'>
-            <div class='likes'>
-                Likes
-                <button class='btn-primary' href = '/like'>Like</button>
+            Likes
+            <div class='likes' id={{post.key}}>
+                {{post.likes}}
             </div>
+            <button class='btn-primary like-btn' id='{{post.key}}' href='/like'>Like</button>
             <div class='comments'>
-                Comments {{post.comments}}
+                Comments
+                <ul>
+                    {% for comment in post.comments %}
+                    <li>
+                        {{comment.username}} says {{comment.comment}}!
+                    </li>
+                    {% endfor %}
+                </ul>
+
                 </br>
                 New Comment
+                <div class ='new_comment'>
                 <form method='post'>
-                    <input name="comment" type='text'></input>
+                    <input name="comment" type='text'>
+                    <button class="new_comment" id='{{post.key}}'>New Comment</button>
                 </form>
+                  </div>
             </div>
         </div>
     </div>
@@ -44,4 +56,70 @@
     </p>
     {% endfor %}
 </div>
+
+<script>
+    $(document).ready(function() {
+    // todo how do you designate like button id by click
+    $('button.like-btn').click(function() {
+        var post_id = this.id;
+        console.log(post_id);
+
+        console.log(post_id);
+        $.ajax({
+                url: '/',
+                data: {
+                    key: post_id,
+                    like: true
+                },
+                type: 'POST',
+                dataType: JSON,
+                success: function(json){
+                    $('div.likes').text(json);
+                    console.log('hello');
+                },
+                error: function() {
+                    console.log('Sorry there was a problem');
+                },
+                complete: function() {
+                    console.log('Ajax call complete');
+                    //for some reason jquery not liking my selector by Key of the post
+                    //var selector = (post_id).toString();
+                    console.log(selector);
+                    console.log($(selector).text());
+                }
+            })
+        });
+        $('button.new_comment').click(function() {
+            var post_id = this.id;
+            console.log(post_id);
+            var comment = $('div.new_comment input:text').val();
+            console.log(comment);
+        });
+            // $.ajax({
+            //         url: '/',
+            //         data: {
+            //             key: post_id,
+            //             comment: true
+            //         },
+            //         type: 'POST',
+            //         dataType: JSON,
+            //         success: function(json){
+            //             $('div.likes').text(json);
+            //             console.log('hello');
+            //         },
+            //         error: function() {
+            //             console.log('Sorry there was a problem');
+            //         },
+            //         complete: function() {
+            //             console.log('Ajax call complete');
+            //             //for some reason jquery not liking my selector by Key of the post
+            //             //var selector = (post_id).toString();
+            //             console.log(selector);
+            //             console.log($(selector).text());
+            //         }
+            //     })
+
+
+    });
+</script>
 {% endblock %}
