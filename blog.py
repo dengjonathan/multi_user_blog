@@ -18,6 +18,13 @@ template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
                                autoescape=True)
 
+# jinja2 helper filters
+
+def filterKey(key):
+    return str(key).split(',')[1][1:-1]
+
+jinja_env.filters['filterKey'] = filterKey
+
 with open('secrets.txt') as secret:
     CLIENT_SECRET = secret.read().strip()
 
@@ -121,10 +128,7 @@ class MainPage(BaseHandler):
         self.render('home.html', posts=posts, session=self.session)
 
     def post(self):
-        print '### request', self.request.get('like')
-        key = self.request.get('key')
-        # convert key to integer in KeyProperty
-        key = int(key.split(',')[1][:-1])
+        key = int(self.request.get('key'))
         post = ndb.Key('Post', key).get()
         if self.request.get('like'):
             post.likes += 1

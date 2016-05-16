@@ -16,10 +16,10 @@
 
         <div class='social-buttons'>
             Likes
-            <div class='likes' id={{post.key}}>
+            <div class='likes' id={{post.key | filterKey}}>
                 {{post.likes}}
             </div>
-            <button class='btn-primary like-btn' id='{{post.key}}' href='/like'>Like</button>
+            <button class='btn-primary like-btn' id='{{post.key | filterKey }}' href='/like'>Like</button>
             <div class='comments'>
                 Comments
                 <ul>
@@ -32,13 +32,13 @@
 
                 </br>
                 New Comment
-                <div class ='new_comment'>
-                <form method='post'>
-                    <input name="comment" type='text'>
-                    <input type='hidden' name='key' value='{{post.key}}' />
-                    <button class="new_comment" id='{{post.key}}'>New Comment</button>
-                </form>
-                  </div>
+                <div class='new_comment'>
+                    <form method='post'>
+                        <input name="comment" type='text'>
+                        <input type='hidden' name='key' value='{{post.key}}' />
+                        <button class="new_comment" id='{{post.key}}'>New Comment</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -54,75 +54,56 @@
 
 <script>
     $(document).ready(function() {
-    // todo how do you designate like button id by click
-    $('button.like-btn').click(function() {
-        var post_id = this.id;
-        console.log(post_id);
-        $.post('/',
-          {
-            'key' : post_id,
-            'like': true
-          }).done(function(response){
-            response = $.parseJSON(response);
-            var selector = '#' + post_id + '.likes';
-            $(selector).text(response['likes']);
-          }).fail(function(){
-            alert('Failed to reach server')
-          });
+        // Like button increases likes in database and increments HTML element
+        // on home page
+        $('button.like-btn').click(function() {
+            var post_id = this.id;
+            $.post('/', {
+                'key': post_id,
+                'like': true
+            }).done(function(response) {
+                console.log(response);
+                response = $.parseJSON(response);
+                console.log(response['likes']);
+                $('div #' + post_id).text(response['likes']);
+            }).fail(function() {
+                alert('Failed to reach server')
+            });
+        });
 
-
+        // new comment button inserts comment in database and updates homepage
+        $('button.new_comment').click(function() {
+            var post_id = this.id;
+            var comment = $('div.new_comment input:text').val();
+            console.log(comment);
+            // Todo this is definitely not right
+            // $('div.comments').append('<li>' + {{session['username']}} + ' says'
+            //   + comment + '</li>')
+            return false;
+        });
         // $.ajax({
         //         url: '/',
         //         data: {
         //             key: post_id,
-        //             like: true
+        //             comment: true
         //         },
         //         type: 'POST',
         //         dataType: JSON,
+        //         success: function(json){
+        //             $('div.likes').text(json);
+        //             console.log('hello');
+        //         },
         //         error: function() {
         //             console.log('Sorry there was a problem');
         //         },
-        //         complete: function(response) {
+        //         complete: function() {
         //             console.log('Ajax call complete');
-        //             console.log(response);
+        //             //for some reason jquery not liking my selector by Key of the post
         //             //var selector = (post_id).toString();
-        //             //console.log(selector);
-        //           //  console.log($(selector).text());
+        //             console.log(selector);
+        //             console.log($(selector).text());
         //         }
         //     })
-        });
-      $('button.new_comment').click(function() {
-          var post_id = this.id;
-          var comment = $('div.new_comment input:text').val();
-          console.log(comment);
-          // Todo this is definitely not right
-          // $('div.comments').append('<li>' + {{session['username']}} + ' says'
-          //   + comment + '</li>')
-          return false;
-      });
-            // $.ajax({
-            //         url: '/',
-            //         data: {
-            //             key: post_id,
-            //             comment: true
-            //         },
-            //         type: 'POST',
-            //         dataType: JSON,
-            //         success: function(json){
-            //             $('div.likes').text(json);
-            //             console.log('hello');
-            //         },
-            //         error: function() {
-            //             console.log('Sorry there was a problem');
-            //         },
-            //         complete: function() {
-            //             console.log('Ajax call complete');
-            //             //for some reason jquery not liking my selector by Key of the post
-            //             //var selector = (post_id).toString();
-            //             console.log(selector);
-            //             console.log($(selector).text());
-            //         }
-            //     })
 
 
     });
