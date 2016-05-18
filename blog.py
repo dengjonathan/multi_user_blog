@@ -147,6 +147,7 @@ class MainPage(BaseHandler):
             print user
         if self.request.get('comment'):
             comment = self.request.get('comment')
+            print '###', comment
             n = dbc.Comment(username=self.session['username'],
                         comment=comment)
             post.comments.append(n)

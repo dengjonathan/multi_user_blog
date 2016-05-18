@@ -22,7 +22,11 @@
                             {{post.likes | length}}
                         </div>
                         <div type=''>
-                            {{post.likes[:5] | join(', ')}} and {{post.likes |length -5}} others like this!
+                            {% if post.likes | length > 0 %}
+                            {{post.likes[0]}} and {{post.likes |length - 1}} others like this!
+                            {% else %}
+                            0 people like this.
+                            {% endif %}
                         </div>
                         <button class='btn-primary like-btn' id='{{post.key | filterKey }}' href='/like'>Like</button>
                         <button class='btn-primary  hidden dislike-btn' id='{{post.key | filterKey }}' href='/like'>UnLike</button>
@@ -41,11 +45,9 @@
                             </br>
                             New Comment
                             <div class='new_comment'>
-                                <form method='post'>
                                     <input name="comment" type='text'>
                                     <input type='hidden' name='key' value='{{post.key | filterKey}}' />
                                     <button class="new_comment btn-primary" id='{{post.key | filterKey }}'>New Comment</button>
-                                </form>
                             </div>
                         </div>
                     </div>
@@ -83,8 +85,7 @@
 
         // new comment button inserts comment in database and updates homepage
         $('button.new_comment').click(function() {
-            // how to check if user is logged in?
-            if (session['username'].length>0) {
+            if ("{{session['username']}}") {
                 var post_id = this.id;
                 var comment = $('div.new_comment input:text').val();
                 $.post('/', {
@@ -93,10 +94,7 @@
                 }).done(function(response) {
                     response = $.parseJSON(response);
                     var comment = response['comment'];
-                    console.log(comment);
-                    console.log(post_id);
                     var input = '<li>{{session.username}} says ' + comment + '</li>';
-                    console.log(input);
                     $('#' + post_id + 'comments').append(input);
                 }).fail(function() {
                     alert('Failed to reach server');
