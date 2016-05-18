@@ -5,16 +5,19 @@
 </br>
 </br>
 <h4>{{post.user_id}}</h4>
+<p>
+  {{post.message}}
+</p>
+Likes
+<a class> {{post.likes}}</a>
+</br>
+Comments</br>
 <ul>
+  {% for comment in post.comments %}
   <li>
-    {{post.message}}
+    {{comment.username}} says {{comment.comment}}
   </li>
-  <li>
-    {{post.likes}}
-  </li>
-  <li>
-    {{post.comments}}
-  </li>
+  {% endfor %}
 </ul>
 
 <form method = 'post'>

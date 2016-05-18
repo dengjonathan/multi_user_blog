@@ -2,47 +2,56 @@
 <div class='posts'>
 
     {% for post in posts %}
+    <div class="row">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="post-preview">
+                <a href="post.html">
+                    <div class='post-title'>
+                        <h2><a href='/article?key={{post.key| filterKey}}'>{{post.title}}</a></h2>
+                    </div>
+                    <div class='post-message'>
+                        {{post.message}}
+                    </div>
+                    <div class='created_at'>
+                        {{post.created_at}}
+                    </div>
 
-    <div class="post col-lg-12">
-        <div class='post-title'>
-            <a href='/article?key={{post.key}}'>{{post.title}}</a>
-        </div>
-        <div class='post-message'>
-            {{post.message}}
-        </div>
-        <div class='created_at'>
-            {{post.created_at}}
-        </div>
+                    <div class='social-buttons'>
+                        Likes
+                        <div class='likes' id={{post.key | filterKey}}>
+                            {{post.likes | length}}
+                        </div>
+                        <div type=''>
+                            {{post.likes[:5] | join(', ')}} and {{post.likes |length -5}} others like this!
+                        </div>
+                        <button class='btn-primary like-btn' id='{{post.key | filterKey }}' href='/like'>Like</button>
+                        <button class='btn-primary  hidden dislike-btn' id='{{post.key | filterKey }}' href='/like'>UnLike</button>
+                        <div>
+                            Comments
+                            <div class='comments' id='{{post.key | filterKey }}'>
+                                <ul class='comments-list' id='{{post.key|filterKey }}comments'>
+                                    {% for comment in post.comments[-5:] %}
+                                    <li>
+                                        {{comment.username}} says {{comment.comment}}! {{comment.created_at}}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
 
-        <div class='social-buttons'>
-            Likes
-            <div class='likes' id={{post.key | filterKey}}>
-                {{post.likes}}
-            </div>
-            <button class='btn-primary like-btn' id='{{post.key | filterKey }}' href='/like'>Like</button>
-            <div class='comments'>
-                Comments
-                <ul>
-                    {% for comment in post.comments %}
-                    <li>
-                        {{comment.username}} says {{comment.comment}}!
-                    </li>
-                    {% endfor %}
-                </ul>
-
-                </br>
-                New Comment
-                <div class='new_comment'>
-                    <form method='post'>
-                        <input name="comment" type='text'>
-                        <input type='hidden' name='key' value='{{post.key}}' />
-                        <button class="new_comment" id='{{post.key}}'>New Comment</button>
-                    </form>
-                </div>
+                            </div>
+                            </br>
+                            New Comment
+                            <div class='new_comment'>
+                                <form method='post'>
+                                    <input name="comment" type='text'>
+                                    <input type='hidden' name='key' value='{{post.key | filterKey}}' />
+                                    <button class="new_comment btn-primary" id='{{post.key | filterKey }}'>New Comment</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
             </div>
         </div>
     </div>
-
     <p>
         {{title}}
     </p>
@@ -58,54 +67,46 @@
         // on home page
         $('button.like-btn').click(function() {
             var post_id = this.id;
+            console.log(post_id);
             $.post('/', {
                 'key': post_id,
                 'like': true
             }).done(function(response) {
-                console.log(response);
                 response = $.parseJSON(response);
-                console.log(response['likes']);
-                $('div #' + post_id).text(response['likes']);
+                $('div#' + post_id).text(response['num_likes']);
+                $('button#' + post_id + '.like-btn').addClass("hidden");
+                $('button#' + post_id + '.dislike-btn').removeClass("hidden");
             }).fail(function() {
-                alert('Failed to reach server')
+                alert('Failed to reach server');
             });
         });
 
         // new comment button inserts comment in database and updates homepage
         $('button.new_comment').click(function() {
-            var post_id = this.id;
-            var comment = $('div.new_comment input:text').val();
-            console.log(comment);
-            // Todo this is definitely not right
-            // $('div.comments').append('<li>' + {{session['username']}} + ' says'
-            //   + comment + '</li>')
-            return false;
+            // how to check if user is logged in?
+            if (session['username'].length>0) {
+                var post_id = this.id;
+                var comment = $('div.new_comment input:text').val();
+                $.post('/', {
+                    'key': post_id,
+                    'comment': comment
+                }).done(function(response) {
+                    response = $.parseJSON(response);
+                    var comment = response['comment'];
+                    console.log(comment);
+                    console.log(post_id);
+                    var input = '<li>{{session.username}} says ' + comment + '</li>';
+                    console.log(input);
+                    $('#' + post_id + 'comments').append(input);
+                }).fail(function() {
+                    alert('Failed to reach server');
+                });
+            } else {
+                $('p.error').text('You need to login or register to comment.');
+            }
+
         });
-        // $.ajax({
-        //         url: '/',
-        //         data: {
-        //             key: post_id,
-        //             comment: true
-        //         },
-        //         type: 'POST',
-        //         dataType: JSON,
-        //         success: function(json){
-        //             $('div.likes').text(json);
-        //             console.log('hello');
-        //         },
-        //         error: function() {
-        //             console.log('Sorry there was a problem');
-        //         },
-        //         complete: function() {
-        //             console.log('Ajax call complete');
-        //             //for some reason jquery not liking my selector by Key of the post
-        //             //var selector = (post_id).toString();
-        //             console.log(selector);
-        //             console.log($(selector).text());
-        //         }
-        //     })
-
-
+        return false;
     });
 </script>
 {% endblock %}

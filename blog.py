@@ -129,19 +129,29 @@ class MainPage(BaseHandler):
 
     def post(self):
         key = int(self.request.get('key'))
+        print '###', key
         post = ndb.Key('Post', key).get()
+        print '###', post
+        user = dbc.User.query().filter(
+            dbc.User.username==self.session['username']
+            ).fetch(1)[0]
+        print user
         if self.request.get('like'):
-            post.likes += 1
+            post.likes.append(user.username)
             post.put()
-            json_string = {'likes': post.likes}
+            json_string = {'likes': post.likes,
+                           'num_likes': len(post.likes)}
             self.write(json.dumps(json_string))
+            user.likes.append(key)
+            user.put()
+            print user
         if self.request.get('comment'):
             comment = self.request.get('comment')
             n = dbc.Comment(username=self.session['username'],
                         comment=comment)
             post.comments.append(n)
             post.put()
-            return {'comment': comment}
+            self.write(json.dumps({'comment': comment}))
 
 class Welcome(BaseHandler):
 
@@ -152,9 +162,8 @@ class Welcome(BaseHandler):
 class Signup(BaseHandler):
 
     def get(self):
-        error=self.request.get('error')
         self.render('signup.html', params=None,
-                    error=error, session=self.session)
+                    error='', session=self.session)
 
     def post(self):
         username = self.request.get('username')
@@ -173,6 +182,9 @@ class Signup(BaseHandler):
         if email:
             if not valid_email(email):
                 error['email'] = 'Enter valid email address'
+        if dbc.User.query().filter(dbc.User.username==username):
+            error= 'An account is already registered \
+                    with this account'
         if error:
             self.render('signup.html', error=error,
                         params=params, session=self.session)
@@ -259,9 +271,11 @@ class NewPost(BaseHandler):
 class Article(BaseHandler):
     def get(self):
         #todo get key from parameter sent to article handler
-        key = self.get.request['key']
-        post = dbc.Post.query().filter(Post.key==key)
-        self.render('article.html', session=self.session)
+        key = int(self.request.get('key'))
+        post = ndb.Key('Post', key).get()
+        print key
+        print post
+        self.render('article.html', session=self.session, post=post)
 
     def post(self):
         title = self.request.get('comment')

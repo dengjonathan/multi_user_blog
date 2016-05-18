@@ -10,7 +10,8 @@
 </head>
 
 <body>
-    <div class='navbar navbar-inverse navbar-fixed-top'>
+    <!-- NavBar -->
+    <div class='navbar navbar-default navbar-fixed-top'>
         <div class='navbar-brand'>
             SUPdate
         </div>
@@ -28,12 +29,33 @@
             </ul>
         </div>
     </div>
-  </br>
+
+</br>
+</br>
+<!-- Page Header -->
+<header class="intro-header" style="background-image: url('img/Matterhorn.jpg')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="site-heading">
+                    <h1>SUPdate</h1>
+                    <hr class="small">
+                    <span class="subheading">A place to think</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+</br>
 </br>
 <p class='error'>
   {{error}}
 </p>
-    {% block content %} {% endblock %}
+<div class = 'container'>
+    {% block content %}
+    <!-- all child templates content goes here -->
+    {% endblock %}
+</div>
 </body>
 
 </html>
