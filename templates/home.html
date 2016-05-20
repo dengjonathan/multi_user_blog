@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 
+<div class = 'masonry'>
 {% for post in posts %}
 <div class="article col-md-5">
 
@@ -23,8 +24,8 @@
             {% else %}
             0 people like this.
             {% endif %}
-        <button class='btn-primary like-btn' id='{{post.key | filterKey }}' href='/like'>Like</button>
-        <button class='btn-primary  hidden dislike-btn' id='{{post.key | filterKey }}' href='/like'>UnLike</button>
+        <button class='btn btn-primary like-btn' id='{{post.key | filterKey }}' href='/like'>Like</button>
+        <button class='btn btn-primary hidden dislike-btn' id='{{post.key | filterKey }}' href='/like'>UnLike</button>
        </div>
 
         <div class = 'comments'>
@@ -50,6 +51,7 @@
     </div>
 </div>
 {% endfor %}
+</div>
 
 <script>
 $(document).ready(function() {
@@ -81,7 +83,10 @@ $(document).ready(function() {
             }).done(function(response) {
                 response = $.parseJSON(response);
                 var comment = response['comment'];
-                var input = '<li>{{session.username}} says ' + comment + '</li>';
+                var time_stamp = response['time_stamp'];
+                console.log(time_stamp);
+                var input = '<li>{{session.username}} says ' + comment +
+                    time_stamp + '</li>';
                 $('#' + post_id + 'comments').append(input);
             }).fail(function() {
                 alert('Failed to reach server');
