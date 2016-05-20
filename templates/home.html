@@ -52,45 +52,45 @@
 {% endfor %}
 
 <script>
-    $(document).ready(function() {
-        // Like button increases likes in database and increments HTML element
-        // on home page
-        $('button.like-btn').click(function() {
+$(document).ready(function() {
+    // Like button increases likes in database and increments HTML element
+    // on home page
+    $('button.like-btn').click(function() {
+        var post_id = this.id;
+        console.log(post_id);
+        $.post('/', {
+            'key': post_id,
+            'like': true
+        }).done(function(response) {
+            response = $.parseJSON(response);
+            $('div#' + post_id).text(response['num_likes']);
+            $('button#' + post_id + '.like-btn').addClass("hidden");
+            $('button#' + post_id + '.dislike-btn').removeClass("hidden");
+        }).fail(function() {
+            alert('Failed to reach server');
+        });
+    });
+    // new comment button inserts comment in database and updates homepage
+    $('button.new_comment').click(function() {
+        if ("{{session['username']}}") {
             var post_id = this.id;
-            console.log(post_id);
+            var comment = $('div.new_comment input:text').val();
             $.post('/', {
                 'key': post_id,
-                'like': true
+                'comment': comment
             }).done(function(response) {
                 response = $.parseJSON(response);
-                $('div#' + post_id).text(response['num_likes']);
-                $('button#' + post_id + '.like-btn').addClass("hidden");
-                $('button#' + post_id + '.dislike-btn').removeClass("hidden");
+                var comment = response['comment'];
+                var input = '<li>{{session.username}} says ' + comment + '</li>';
+                $('#' + post_id + 'comments').append(input);
             }).fail(function() {
                 alert('Failed to reach server');
             });
-        });
-        // new comment button inserts comment in database and updates homepage
-        $('button.new_comment').click(function() {
-            if ("{{session['username']}}") {
-                var post_id = this.id;
-                var comment = $('div.new_comment input:text').val();
-                $.post('/', {
-                    'key': post_id,
-                    'comment': comment
-                }).done(function(response) {
-                    response = $.parseJSON(response);
-                    var comment = response['comment'];
-                    var input = '<li>{{session.username}} says ' + comment + '</li>';
-                    $('#' + post_id + 'comments').append(input);
-                }).fail(function() {
-                    alert('Failed to reach server');
-                });
-            } else {
-                $('p.error').text('You need to login or register to comment.');
-            }
-        });
-        return false;
+        } else {
+            $('p.error').text('You need to login or register to comment.');
+        }
     });
+    return false;
+});
 </script>
 {% endblock %}
