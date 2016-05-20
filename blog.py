@@ -135,7 +135,6 @@ class MainPage(BaseHandler):
         user = dbc.User.query().filter(
             dbc.User.username==self.session['username']
             ).fetch(1)[0]
-        print user
         if self.request.get('like'):
             post.likes.append(user.username)
             post.put()
@@ -144,7 +143,6 @@ class MainPage(BaseHandler):
             self.write(json.dumps(json_string))
             user.likes.append(key)
             user.put()
-            print user
         if self.request.get('comment'):
             comment = self.request.get('comment')
             print '###', comment
@@ -152,7 +150,8 @@ class MainPage(BaseHandler):
                         comment=comment)
             post.comments.append(n)
             post.put()
-            self.write(json.dumps({'comment': comment}))
+            self.write(json.dumps({'comment': comment,
+                                   'time_stamp': str(post.created_at)}))
 
 class Welcome(BaseHandler):
 
@@ -256,11 +255,9 @@ class NewPost(BaseHandler):
         print "### %s" % num
         message = self.request.get('message')
         if title and message:
-            comment = dbc.Comment(username='jon', comment='Nice Post!')
             a = dbc.Post(title=title,
                          message=message,
                          username=self.session['username'],
-                         comments=[comment]
                          )
             a.put()
             self.redirect('/')

@@ -1,67 +1,55 @@
-{% extends 'base.html' %} {% block content %}
-<div class='posts'>
+{% extends 'base.html' %}
+{% block content %}
 
-    {% for post in posts %}
-    <div class="row">
-        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-            <div class="post-preview">
-                <a href="post.html">
-                    <div class='post-title'>
-                        <h2><a href='/article?key={{post.key| filterKey}}'>{{post.title}}</a></h2>
-                    </div>
-                    <div class='post-message'>
-                        {{post.message}}
-                    </div>
-                    <div class='created_at'>
-                        {{post.created_at}}
-                    </div>
+{% for post in posts %}
+<div class="article col-md-5">
 
-                    <div class='social-buttons'>
-                        Likes
-                        <div class='likes' id={{post.key | filterKey}}>
-                            {{post.likes | length}}
-                        </div>
-                        <div type=''>
-                            {% if post.likes | length > 0 %}
-                            {{post.likes[0]}} and {{post.likes |length - 1}} others like this!
-                            {% else %}
-                            0 people like this.
-                            {% endif %}
-                        </div>
-                        <button class='btn-primary like-btn' id='{{post.key | filterKey }}' href='/like'>Like</button>
-                        <button class='btn-primary  hidden dislike-btn' id='{{post.key | filterKey }}' href='/like'>UnLike</button>
-                        <div>
-                            Comments
-                            <div class='comments' id='{{post.key | filterKey }}'>
-                                <ul class='comments-list' id='{{post.key|filterKey }}comments'>
-                                    {% for comment in post.comments[-5:] %}
-                                    <li>
-                                        {{comment.username}} says {{comment.comment}}! {{comment.created_at}}
-                                    </li>
-                                    {% endfor %}
-                                </ul>
+    <div class='post-title col-lg'>
+        <h2><a href='/article?key={{post.key| filterKey}}'>{{post.title}}</a></h2>
+    </div>
 
-                            </div>
-                            </br>
-                            New Comment
-                            <div class='new_comment'>
-                                    <input name="comment" type='text'>
-                                    <input type='hidden' name='key' value='{{post.key | filterKey}}' />
-                                    <button class="new_comment btn-primary" id='{{post.key | filterKey }}'>New Comment</button>
-                            </div>
-                        </div>
-                    </div>
+    <div class='post-message'>
+        {{post.message}}
+    </div>
+
+    <div class='created-at'>
+        {{post.created_at}}
+    </div>
+
+    <div class='social-buttons'>
+        <div class='likes' id={{post.key | filterKey}}>
+            {% if post.likes | length > 0 %}
+            {{post.likes[0]}} and {{post.likes |length - 1}} others like this!
+            {% else %}
+            0 people like this.
+            {% endif %}
+        <button class='btn-primary like-btn' id='{{post.key | filterKey }}' href='/like'>Like</button>
+        <button class='btn-primary  hidden dislike-btn' id='{{post.key | filterKey }}' href='/like'>UnLike</button>
+       </div>
+
+        <div class = 'comments'>
+            Comments
+            <div class='comments' id='{{post.key | filterKey }}'>
+                <ul class='comments-list' id='{{post.key|filterKey }}comments'>
+                    {% for comment in post.comments[-5:] %}
+                    <li>
+                        {{comment.username}} says {{comment.comment}}! {{comment.created_at}}
+                    </li>
+                    {% endfor %}
+                </ul>
+
+            </div>
+            </br>
+            New Comment
+            <div class='new_comment'>
+                <input name="comment" type='text'>
+                <input type='hidden' name='key' value='{{post.key | filterKey}}' />
+                <button class="new_comment btn-primary" id='{{post.key | filterKey }}'>New Comment</button>
             </div>
         </div>
     </div>
-    <p>
-        {{title}}
-    </p>
-    <p>
-        {{message}}
-    </p>
-    {% endfor %}
 </div>
+{% endfor %}
 
 <script>
     $(document).ready(function() {
@@ -82,7 +70,6 @@
                 alert('Failed to reach server');
             });
         });
-
         // new comment button inserts comment in database and updates homepage
         $('button.new_comment').click(function() {
             if ("{{session['username']}}") {
@@ -102,7 +89,6 @@
             } else {
                 $('p.error').text('You need to login or register to comment.');
             }
-
         });
         return false;
     });
