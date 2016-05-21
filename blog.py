@@ -1,35 +1,35 @@
+# standard library imports
 import os
 import re
 import string
 import hmac
 import hashlib
 import random
-# import bcrypt
 import webapp2
 import jinja2
 import json
 import time
 
+# Google App Engine IMports
 from google.appengine.ext import ndb
 from webapp2_extras import sessions
+with open('secrets.txt') as secret:
+    CLIENT_SECRET = secret.read().strip()
 
-
+# Jinja2 enviroment config
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
                                autoescape=True)
 
-# jinja2 helper filters
-
-def filterKey(key):
-    return str(key).split(',')[1][1:-1]
+# Jinja2 filter allowing use of ndb Keys as div ids in html templates
+def filterKey(Key):
+    """converts ndb Key object to str object for use in jinja filters"""
+    return str(Key).split(', ')[1][:-1]
 
 jinja_env.filters['filterKey'] = filterKey
 
-with open('secrets.txt') as secret:
-    CLIENT_SECRET = secret.read().strip()
 
-
-# valid signin functions
+# sign-in/ password helper functions
 def valid_username(username):
     """returns True if username entered and is valid"""
     user_RE = re.compile("^[a-zA-Z0-9_-]{3,20}$")
@@ -64,8 +64,6 @@ def check_secure_value(h):
         return value
     else:
         return None
-
-# Todo add bcrypt module
 
 def make_salt(n):
     """returns string of n random characters for use in hashing"""
@@ -118,9 +116,6 @@ class User(ndb.Model):
     # this is a list of integer keys for every article that the user 'liked'
     likes = ndb.IntegerProperty(repeated=True)
 
-def convert_ndb_key(Key):
-    """converts ndb Key object to integer"""
-    return int(str(Key).split(', ')[1][:-1])
 
 # webapp2 Request Handlers
 class BaseHandler(webapp2.RequestHandler):
@@ -159,9 +154,7 @@ class MainPage(BaseHandler):
 
     def post(self):
         key = int(self.request.get('key'))
-        print '###', key
         post = ndb.Key('Post', key).get()
-        print '###', post
         user = User.query().filter(
             User.username==self.session['username']
             ).fetch(1)[0]
@@ -185,7 +178,6 @@ class MainPage(BaseHandler):
             return
         if self.request.get('comment'):
             comment = self.request.get('comment')
-            print '###', comment
             n = Comment(username=self.session['username'],
                         comment=comment)
             post.comments.append(n)
@@ -237,7 +229,7 @@ class Signup(BaseHandler):
                          email=email)
             n.put()
             self.redirect('/')
-    
+
 
 class Login(BaseHandler):
 
@@ -294,7 +286,6 @@ class NewPost(BaseHandler):
     def post(self):
         title = self.request.get('title')
         num = self.request.get('like')
-        print "### %s" % num
         message = self.request.get('message')
         if title and message:
             a = Post(title=title,
@@ -302,7 +293,7 @@ class NewPost(BaseHandler):
                          username=self.session['username'],
                          )
             a.put()
-            key = convert_ndb_key(a.key)
+            key = filterKey(a.key)
             self.redirect('/article?key=' + str(key))
         else:
             self.render('home.html', title='', message='', congrats='Hello!',
@@ -314,8 +305,6 @@ class Article(BaseHandler):
         #todo get key from parameter sent to article handler
         key = int(self.request.get('key'))
         post = ndb.Key('Post', key).get()
-        print key
-        print post
         self.render('article.html', session=self.session, post=post)
 
     def post(self):
@@ -327,6 +316,7 @@ class Article(BaseHandler):
                            )
             a.put()
         else:
+            # todo, make this work
             print 'Error Comment not inserted.'
 
 
