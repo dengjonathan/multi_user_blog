@@ -44,10 +44,10 @@ $(document).ready(function() {
                 response = $.parseJSON(response);
                 var comment = response['comment'];
                 var time_stamp = response['time_stamp'];
-                console.log(time_stamp);
                 var input = '<li>' + username + ' says ' + comment + ' ' +
                     time_stamp + '</li>';
                 $('#' + post_id + 'comments').append(input);
+                $('div.new_comment input:text').empty('');
             }).fail(function() {
                 alert('Failed to reach server');
             });

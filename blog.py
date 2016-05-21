@@ -8,6 +8,7 @@ import random
 import webapp2
 import jinja2
 import json
+import time
 
 from google.appengine.ext import ndb
 from webapp2_extras import sessions
@@ -223,7 +224,7 @@ class Signup(BaseHandler):
         if email:
             if not valid_email(email):
                 error['email'] = 'Enter valid email address'
-        if User.query().filter(User.username==username):
+        if User.query().filter(User.username==username).fetch():
             error= 'An account is already registered \
                     with this account'
         if error:
@@ -235,8 +236,8 @@ class Signup(BaseHandler):
                          password=make_pw_hash(username, password),
                          email=email)
             n.put()
-            self.redirect('/welcome')
-
+            self.redirect('/')
+    
 
 class Login(BaseHandler):
 
@@ -264,7 +265,7 @@ class Login(BaseHandler):
             if user.password == given_password:
                 self.session['username'] = username
                 self.session['email'] = user.email
-                return self.redirect('/welcome')
+                self.redirect('/')
         return self.render('login.html', username=username, session=self.session,
                     error='Incorrect username/ password combo')
 
@@ -334,9 +335,8 @@ class Profile(BaseHandler):
         username = self.session['username']
         user = User.query().filter(User.username==username).fetch(1)[0]
         posts = Post.query().filter(Post.username==username).fetch()
-        num_posts = len(posts)
         self.render('profile.html', user=user,
-                    posts=posts, num_posts=num_posts, session=self.session)
+                    posts=posts, session=self.session)
 
 
 class TestPage(BaseHandler):
