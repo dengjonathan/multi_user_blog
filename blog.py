@@ -12,7 +12,6 @@ import json
 from google.appengine.ext import ndb
 from webapp2_extras import sessions
 
-import database_classes as dbc
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
@@ -91,6 +90,32 @@ def valid_password(name, pw, hash):
     else:
         return False
 
+# ndb database classes
+from google.appengine.ext import ndb
+
+class Comment(ndb.Model):
+    username = ndb.StringProperty()
+    created_at = ndb.DateTimeProperty(auto_now_add=True)
+    comment = ndb.TextProperty()
+
+
+class Post(ndb.Model):
+    """Models an individual content post with title, message, date, and user"""
+    title = ndb.StringProperty(required=True)
+    message = ndb.TextProperty()
+    created_at = ndb.DateTimeProperty(auto_now_add=True)
+    username = ndb.StringProperty()
+    likes = ndb.StringProperty(repeated=True)
+    comments = ndb.StructuredProperty(Comment, repeated=True)
+
+
+class User(ndb.Model):
+    username = ndb.StringProperty(required=True)
+    password = ndb.StringProperty(required=True)
+    email = ndb.StringProperty()
+    account_created = ndb.DateTimeProperty(auto_now_add=True)
+    # this is a list of integer keys for every article that the user 'liked'
+    likes = ndb.IntegerProperty(repeated=True)
 
 # webapp2 Request Handlers
 class BaseHandler(webapp2.RequestHandler):
@@ -124,7 +149,7 @@ class BaseHandler(webapp2.RequestHandler):
 class MainPage(BaseHandler):
 
     def get(self):
-        posts = dbc.Post.query().order(-dbc.Post.created_at)
+        posts = Post.query().order(-Post.created_at)
         self.render('home.html', posts=posts, session=self.session)
 
     def post(self):
@@ -132,8 +157,8 @@ class MainPage(BaseHandler):
         print '###', key
         post = ndb.Key('Post', key).get()
         print '###', post
-        user = dbc.User.query().filter(
-            dbc.User.username==self.session['username']
+        user = User.query().filter(
+            User.username==self.session['username']
             ).fetch(1)[0]
         if self.request.get('like'):
             post.likes.append(user.username)
@@ -143,15 +168,27 @@ class MainPage(BaseHandler):
             self.write(json.dumps(json_string))
             user.likes.append(key)
             user.put()
+            return
+        if self.request.get('unlike'):
+            post.likes.remove(user.username)
+            post.put()
+            json_string = {'likes': post.likes,
+                           'num_likes': len(post.likes)}
+            self.write(json.dumps(json_string))
+            user.likes.append(key)
+            user.put()
+            return
         if self.request.get('comment'):
             comment = self.request.get('comment')
             print '###', comment
-            n = dbc.Comment(username=self.session['username'],
+            n = Comment(username=self.session['username'],
                         comment=comment)
             post.comments.append(n)
             post.put()
             self.write(json.dumps({'comment': comment,
                                    'time_stamp': str(post.created_at)}))
+            return
+
 
 class Welcome(BaseHandler):
 
@@ -182,7 +219,7 @@ class Signup(BaseHandler):
         if email:
             if not valid_email(email):
                 error['email'] = 'Enter valid email address'
-        if dbc.User.query().filter(dbc.User.username==username):
+        if User.query().filter(User.username==username):
             error= 'An account is already registered \
                     with this account'
         if error:
@@ -190,7 +227,7 @@ class Signup(BaseHandler):
                         params=params, session=self.session)
         else:
             self.session['username'] = username
-            n = dbc.User(username=username,
+            n = User(username=username,
                          password=make_pw_hash(username, password),
                          email=email)
             n.put()
@@ -213,7 +250,7 @@ class Login(BaseHandler):
         #     return self.redirect('/signup?error')
         username = self.request.get('username')
         password = self.request.get('password')
-        user_query = dbc.User.query().filter(dbc.User.username==username)
+        user_query = User.query().filter(User.username==username)
         if user_query.fetch():
             user = user_query.fetch(1)[0]
             given_password = make_pw_hash(
@@ -255,7 +292,7 @@ class NewPost(BaseHandler):
         print "### %s" % num
         message = self.request.get('message')
         if title and message:
-            a = dbc.Post(title=title,
+            a = Post(title=title,
                          message=message,
                          username=self.session['username'],
                          )
@@ -279,7 +316,7 @@ class Article(BaseHandler):
         title = self.request.get('comment')
         username = self.session.get('username')
         if title and username:
-            a = dbc.Comment(comment=comment,
+            a = Comment(comment=comment,
                             username=username
                            )
             a.put()
@@ -290,8 +327,8 @@ class Article(BaseHandler):
 class Profile(BaseHandler):
     def get(self):
         username = self.session['username']
-        user = dbc.User.query().filter(dbc.User.username==username).fetch(1)[0]
-        posts = dbc.Post.query().filter(dbc.Post.username==username).fetch()
+        user = User.query().filter(User.username==username).fetch(1)[0]
+        posts = Post.query().filter(Post.username==username).fetch()
         num_posts = len(posts)
         self.render('profile.html', user=user,
                     posts=posts, num_posts=num_posts, session=self.session)
@@ -300,8 +337,8 @@ class Profile(BaseHandler):
 class TestPage(BaseHandler):
     def get(self):
         session = self.session
-        users = dbc.User.query()
-        posts = dbc.Post.query()
+        users = User.query()
+        posts = Post.query()
         self.render('testpage.html', users=users, posts=posts, session=session)
 
 config = {}

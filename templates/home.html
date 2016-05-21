@@ -1,101 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class = 'masonry'>
+<div class = 'row'>
 {% for post in posts %}
-<div class="article col-md-5">
-
-    <div class='post-title col-lg'>
-        <h2><a href='/article?key={{post.key| filterKey}}'>{{post.title}}</a></h2>
-    </div>
-
-    <div class='post-message'>
-        {{post.message}}
-    </div>
-
-    <div class='created-at'>
-        {{post.created_at}}
-    </div>
-
-    <div class='social-buttons'>
-        <div class='likes' id={{post.key | filterKey}}>
-            {% if post.likes | length > 0 %}
-            {{post.likes[0]}} and {{post.likes |length - 1}} others like this!
-            {% else %}
-            0 people like this.
-            {% endif %}
-        <button class='btn btn-primary like-btn' id='{{post.key | filterKey }}' href='/like'>Like</button>
-        <button class='btn btn-primary hidden dislike-btn' id='{{post.key | filterKey }}' href='/like'>UnLike</button>
-       </div>
-
-        <div class = 'comments'>
-            Comments
-            <div class='comments' id='{{post.key | filterKey }}'>
-                <ul class='comments-list' id='{{post.key|filterKey }}comments'>
-                    {% for comment in post.comments[-5:] %}
-                    <li>
-                        {{comment.username}} says {{comment.comment}}! {{comment.created_at}}
-                    </li>
-                    {% endfor %}
-                </ul>
-
-            </div>
-            </br>
-            New Comment
-            <div class='new_comment'>
-                <input name="comment" type='text'>
-                <input type='hidden' name='key' value='{{post.key | filterKey}}' />
-                <button class="new_comment btn-primary" id='{{post.key | filterKey }}'>New Comment</button>
-            </div>
-        </div>
-    </div>
+<!-- Specify shape of each article container -->
+<div class="col-md-12">
+  {% include 'article_view_template.html' %}
 </div>
 {% endfor %}
 </div>
-
-<script>
-$(document).ready(function() {
-    // Like button increases likes in database and increments HTML element
-    // on home page
-    $('button.like-btn').click(function() {
-        var post_id = this.id;
-        console.log(post_id);
-        $.post('/', {
-            'key': post_id,
-            'like': true
-        }).done(function(response) {
-            response = $.parseJSON(response);
-            $('div#' + post_id).text(response['num_likes']);
-            $('button#' + post_id + '.like-btn').addClass("hidden");
-            $('button#' + post_id + '.dislike-btn').removeClass("hidden");
-        }).fail(function() {
-            alert('Failed to reach server');
-        });
-    });
-    // new comment button inserts comment in database and updates homepage
-    $('button.new_comment').click(function() {
-        if ("{{session['username']}}") {
-            var post_id = this.id;
-            var comment = $('div.new_comment input:text').val();
-            $.post('/', {
-                'key': post_id,
-                'comment': comment
-            }).done(function(response) {
-                response = $.parseJSON(response);
-                var comment = response['comment'];
-                var time_stamp = response['time_stamp'];
-                console.log(time_stamp);
-                var input = '<li>{{session.username}} says ' + comment +
-                    time_stamp + '</li>';
-                $('#' + post_id + 'comments').append(input);
-            }).fail(function() {
-                alert('Failed to reach server');
-            });
-        } else {
-            $('p.error').text('You need to login or register to comment.');
-        }
-    });
-    return false;
-});
-</script>
 {% endblock %}

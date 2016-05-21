@@ -1,29 +1,8 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<h2>{{post.title}}</h2>
-</br>
-<h4>{{post.user_id}}</h4>
-<p>
-  {{post.message}}
-</p>
-Likes
-<a class> {{post.likes}}</a>
-</br>
-Comments</br>
-<ul>
-  {% for comment in post.comments %}
-  <li>
-    {{comment.username}} says {{comment.comment}}
-  </li>
-  {% endfor %}
-</ul>
-
-<form method = 'post'>
-  <textarea name='comment'></textarea>
-  <input type = 'submit' name'Submit comment'>
-  <btn type='btn-primary' id='Like'>Like</btn>
-</form>
-
-
+<div class = 'row'>
+<div class="col-md-12">
+{% include 'article_view_template.html' %}
+</div>
+</div>
 {% endblock %}
