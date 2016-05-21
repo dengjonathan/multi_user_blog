@@ -1,22 +1,33 @@
 body {
-  font-family: monospace sans-serif;
+  font-family: 'Titillium Web', sans-serif;
   width: 800px;
   margin: 0 auto;
   padding: 5px;
 }
 
+
 .error {
   color: red;
 }
 
-textarea {
-  width: 400px;
-  height: 300px;
-  font-size: 20px;
+.jumbotron {
+    margin-bottom: 0px;
+    background-image: url(/img/nav.jpg);
+    background-position: 0% 25%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    color: white;
+
+}
+.display-1{
+  text-shadow: gray 0.1em 0.1em 0.1em;
 }
 
-hr {
-  margin: 30px auto;
+.article {
+  border: 2px solid #4195fc;
+  border-radius: 20px;
+  padding: 25px;
+  margin: 10px;
 }
 
 .post-title {
@@ -28,12 +39,39 @@ hr {
   font-size: 15px;
 }
 
-.new-title {
-  font-weight: bold;
-  font-size: 20px;
+.created-at {
+  font-size: 12px;
 }
 
-.new-message {
+.likes {
+  font-size: 12px;
   font-weight: bold;
-  font-size: 20px;
 }
+
+.comments {
+  font-size: 12px;
+
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+textarea {
+  width: 400px;
+  height: 300px;
+  font-size: 20px;
+  border: 2px solid #black;
+  border-radius: 7px
+}
+
+input {
+  border: 2px solid #black;
+  border-radius: 7px
+}
+
+input:focus {
+    outline:none;
+    border: 1px solid #4195fc;
+    box-shadow: 0px 0px 5px #4195fc;
+  }

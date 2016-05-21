@@ -117,6 +117,10 @@ class User(ndb.Model):
     # this is a list of integer keys for every article that the user 'liked'
     likes = ndb.IntegerProperty(repeated=True)
 
+def convert_ndb_key(Key):
+    """converts ndb Key object to integer"""
+    return int(str(Key).split(', ')[1][:-1])
+
 # webapp2 Request Handlers
 class BaseHandler(webapp2.RequestHandler):
 
@@ -297,7 +301,8 @@ class NewPost(BaseHandler):
                          username=self.session['username'],
                          )
             a.put()
-            self.redirect('/')
+            key = convert_ndb_key(a.key)
+            self.redirect('/article?key=' + str(key))
         else:
             self.render('home.html', title='', message='', congrats='Hello!',
                         error="You need to enter both title and message!",
