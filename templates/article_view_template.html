@@ -8,16 +8,16 @@
     <div class='post-message'>
         {{post.message}}
     </div>
-</br>
+    </br>
 
     <div class='social-buttons row'>
         <div class='likes col-md-6' id={{post.key | filterKey}} class='likes-total'>
             <p>
-                {{post.likes |length}} people like this!
-
-            <button class='btn btn-primary like-btn' id='{{post.key | filterKey }}' href='/like'>Like</button>
-            <button class='btn btn-primary unlike-btn hidden' id='{{post.key | filterKey }}' href='/like'>UnLike</button>
-          </p>
+                {{post.likes |length}} people like this! {% if session['username'] %}
+                <button class='btn btn-primary unlike hidden' id='{{post.key | filterKey }}'>UnLike</button>
+                <button class='btn btn-primary like-btn' id='{{post.key | filterKey }}'>Like</button>
+                {% else %} {% endif %}
+            </p>
         </div>
 
         <div class='comments col-md-9'>
@@ -32,12 +32,15 @@
                 </ul>
             </div>
             </br>
-            New Comment
+            {% if session['username'] %}
             <div class='new_comment'>
-                <input name="comment" type='text'>
-                <input type='hidden' name='key' value='{{post.key | filterKey}}' />
-                <button class="new_comment btn btn-primary" id='{{post.key | filterKey }}'>New Comment</button>
+                {% else %}
+                <div class='new_comment hidden'>
+                    {% endif %} New Comment
+                    <input name="comment" type='text'>
+                    <input type='hidden' name='key' value='{{post.key | filterKey}}' />
+                    <button class="new_comment btn btn-primary" id='{{post.key | filterKey }}'>New Comment</button>
+                </div>
             </div>
         </div>
     </div>
-</div>

@@ -22,6 +22,8 @@ jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
                                autoescape=True)
 
 # Jinja2 filter allowing use of ndb Keys as div ids in html templates
+
+
 def filterKey(Key):
     """converts ndb Key object to str object for use in jinja filters"""
     return str(Key).split(', ')[1][:-1]
@@ -35,22 +37,28 @@ def valid_username(username):
     user_RE = re.compile("^[a-zA-Z0-9_-]{3,20}$")
     return username and user_RE.match(username)
 
+
 def valid_pass(password):
     pass_RE = re.compile("^.{3,20}$")
     return password and pass_RE.match(password)
+
 
 def valid_email(email):
     email_RE = re.compile("^[\S]+@[\S]+.[\S]+$")
     return email_RE.match(email)
 
 # hash functions
+
+
 def hash_str(s):
     s = str(s)
     return hmac.new(CLIENT_SECRET, s).hexdigest()
 
+
 def make_secure_val(s):
     """given a string value, returns string and sha256 hash in tuple form"""
     return '%s|%s' % (s, hash_str(s))
+
 
 def check_secure_value(h):
     """
@@ -65,11 +73,13 @@ def check_secure_value(h):
     else:
         return None
 
+
 def make_salt(n):
     """returns string of n random characters for use in hashing"""
     choices = string.ascii_letters + string.digits
     salt = ''.join(choices[random.randint(0, len(choices))] for i in range(n))
     return salt
+
 
 def make_pw_hash(name, pw, salt=None):
     """
@@ -80,6 +90,7 @@ def make_pw_hash(name, pw, salt=None):
         salt = make_salt(5)
     hash = hashlib.sha256(name + pw + salt).hexdigest()
     return '%s|%s' % (hash, salt)
+
 
 def valid_password(name, pw, hash):
     hash = hash.split('|')
@@ -92,14 +103,16 @@ def valid_password(name, pw, hash):
 # ndb database classes
 from google.appengine.ext import ndb
 
+
 class Comment(ndb.Model):
+    """Model for comments which are a StructuredProperty of Posts"""
     username = ndb.StringProperty()
     created_at = ndb.DateTimeProperty(auto_now_add=True)
     comment = ndb.TextProperty()
 
 
 class Post(ndb.Model):
-    """Models an individual content post with title, message, date, and user"""
+    """Models for individual content post with likes and comments associated"""
     title = ndb.StringProperty(required=True)
     message = ndb.TextProperty()
     created_at = ndb.DateTimeProperty(auto_now_add=True)
@@ -109,6 +122,7 @@ class Post(ndb.Model):
 
 
 class User(ndb.Model):
+    """Model for an individual user in ndb model"""
     username = ndb.StringProperty(required=True)
     password = ndb.StringProperty(required=True)
     email = ndb.StringProperty()
@@ -156,48 +170,40 @@ class MainPage(BaseHandler):
         key = int(self.request.get('key'))
         post = ndb.Key('Post', key).get()
         user = User.query().filter(
-            User.username==self.session['username']
-            ).fetch(1)[0]
+            User.username == self.session['username']
+        ).fetch()
+        user = user[0]
         if self.request.get('like'):
             post.likes.append(user.username)
             post.put()
-            json_string = {'likes': post.likes,
-                           'num_likes': len(post.likes)}
-            self.write(json.dumps(json_string))
             user.likes.append(key)
             user.put()
-            return
+            json_string = {'likes': post.likes,
+                           'num_likes': len(post.likes)}
+            return self.write(json.dumps(json_string))
         if self.request.get('unlike'):
             post.likes.remove(user.username)
             post.put()
-            json_string = {'likes': post.likes,
-                           'num_likes': len(post.likes)}
-            self.write(json.dumps(json_string))
             user.likes.append(key)
             user.put()
-            return
+            json_string = {'likes': post.likes,
+                           'num_likes': len(post.likes)}
+            return self.write(json.dumps(json_string))
         if self.request.get('comment'):
             comment = self.request.get('comment')
             n = Comment(username=self.session['username'],
                         comment=comment)
             post.comments.append(n)
             post.put()
-            self.write(json.dumps({'comment': comment,
-                                   'time_stamp': str(post.created_at)}))
-            return
+            return self.write(json.dumps({'comment': comment,
+                                          'time_stamp': str(post.created_at)})
+                              )
 
-
-class Welcome(BaseHandler):
-
-    def get(self):
-        username = self.session.get('username')
-        self.render('welcome.html', username=username, session=self.session)
 
 class Signup(BaseHandler):
 
     def get(self):
-        self.render('signup.html', params=None,
-                    error='', session=self.session)
+        self.render('signup.html', session=self.session)
 
     def post(self):
         username = self.request.get('username')
@@ -205,7 +211,7 @@ class Signup(BaseHandler):
         password_check = self.request.get('password_check')
         email = self.request.get('email')
         error = {}
-        params = {'username': username, 'email':email}
+        params = {'username': username, 'email': email}
 
         if not valid_username(username):
             error['username'] = 'Enter valid username between 3 and 20 characters.'
@@ -216,8 +222,8 @@ class Signup(BaseHandler):
         if email:
             if not valid_email(email):
                 error['email'] = 'Enter valid email address'
-        if User.query().filter(User.username==username).fetch():
-            error= 'An account is already registered \
+        if User.query().filter(User.username == username).fetch():
+            error = 'An account is already registered \
                     with this account'
         if error:
             self.render('signup.html', error=error,
@@ -225,8 +231,8 @@ class Signup(BaseHandler):
         else:
             self.session['username'] = username
             n = User(username=username,
-                         password=make_pw_hash(username, password),
-                         email=email)
+                     password=make_pw_hash(username, password),
+                     email=email)
             n.put()
             self.redirect('/')
 
@@ -234,7 +240,7 @@ class Signup(BaseHandler):
 class Login(BaseHandler):
 
     def get(self):
-        self.render('login.html', error='', username='', session=self.session)
+        self.render('login.html', session=self.session)
 
     def post(self):
         """
@@ -242,29 +248,30 @@ class Login(BaseHandler):
         username is in database and hashed password
         matches password stored in database
         """
-        # Todo not sure what this below logic is trying to accomplish
-        # if not self.session['username']:
-        #     return self.redirect('/signup?error')
+        if self.session['username']:
+            error = 'You are already logined in as', self.session['username']
+            return self.redirect('/signup?error=' + error)
         username = self.request.get('username')
         password = self.request.get('password')
-        user_query = User.query().filter(User.username==username)
+        user_query = User.query().filter(User.username == username)
         if user_query.fetch():
             user = user_query.fetch(1)[0]
             given_password = make_pw_hash(
-                                          username, password,
-                                          salt=user.password.split('|')[1]
-                                          )
+                username, password,
+                salt=user.password.split('|')[1]
+            )
             if user.password == given_password:
                 self.session['username'] = username
                 self.session['email'] = user.email
-                self.redirect('/')
+                return self.redirect('/')
         return self.render('login.html', username=username, session=self.session,
-                    error='Incorrect username/ password combo')
+                           error='Incorrect username/ password combo')
 
 
 class Logout(BaseHandler):
+
     def get(self):
-        self.render('logout.html', error='', username='', session=self.session)
+        self.render('logout.html', session=self.session)
 
     def post(self):
         if self.session['username']:
@@ -276,12 +283,14 @@ class Logout(BaseHandler):
                         error='You were never logged in to being with!',
                         session=self.session)
 
+
 class NewPost(BaseHandler):
+
     def get(self):
         if not 'username' in self.session:
             error = 'You need to login or signup to post!'
             return self.redirect('/signup?error=' + error)
-        return self.render('create_new.html', session=self.session, error='')
+        return self.render('create_new.html', session=self.session)
 
     def post(self):
         title = self.request.get('title')
@@ -289,20 +298,21 @@ class NewPost(BaseHandler):
         message = self.request.get('message')
         if title and message:
             a = Post(title=title,
-                         message=message,
-                         username=self.session['username'],
-                         )
+                     message=message,
+                     username=self.session['username'],
+                     )
             a.put()
             key = filterKey(a.key)
             self.redirect('/article?key=' + str(key))
         else:
-            self.render('home.html', title='', message='', congrats='Hello!',
+            self.render('home.html',
                         error="You need to enter both title and message!",
                         session=self.session, num=num)
 
+
 class Article(BaseHandler):
+
     def get(self):
-        #todo get key from parameter sent to article handler
         key = int(self.request.get('key'))
         post = ndb.Key('Post', key).get()
         self.render('article.html', session=self.session, post=post)
@@ -312,24 +322,26 @@ class Article(BaseHandler):
         username = self.session.get('username')
         if title and username:
             a = Comment(comment=comment,
-                            username=username
-                           )
+                        username=username
+                        )
             a.put()
         else:
-            # todo, make this work
-            print 'Error Comment not inserted.'
+            self.render('article.html', session=self.session, post=post,
+                        error='Comment not inserted.')
 
 
 class Profile(BaseHandler):
+
     def get(self):
         username = self.session['username']
-        user = User.query().filter(User.username==username).fetch(1)[0]
-        posts = Post.query().filter(Post.username==username).fetch()
+        user = User.query().filter(User.username == username).fetch(1)[0]
+        posts = Post.query().filter(Post.username == username).fetch()
         self.render('profile.html', user=user,
                     posts=posts, session=self.session)
 
 
 class TestPage(BaseHandler):
+
     def get(self):
         session = self.session
         users = User.query()
@@ -342,7 +354,6 @@ config['webapp2_extras.sessions'] = {
 }
 
 app = webapp2.WSGIApplication([('/', MainPage),
-                               ('/welcome', Welcome),
                                ('/signup', Signup),
                                ('/test', TestPage),
                                ('/login', Login),
