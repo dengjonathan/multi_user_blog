@@ -5,18 +5,19 @@ import string
 import hmac
 import hashlib
 import random
-import webapp2
-import jinja2
 import json
 import time
 
-# Google App Engine IMports
+
+# Google App Engine Imports
+import webapp2
 from google.appengine.ext import ndb
 from webapp2_extras import sessions
 with open('secrets.txt') as secret:
     CLIENT_SECRET = secret.read().strip()
 
 # Jinja2 enviroment config
+import jinja2
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
                                autoescape=True)
@@ -80,7 +81,7 @@ def make_salt(n):
     salt = ''.join(choices[random.randint(0, len(choices))] for i in range(n))
     return salt
 
-
+# TODO: consolidate password hashing
 def make_pw_hash(name, pw, salt=None):
     """
     returns hash of name and password with salt of 5 random alpanumeric chars
@@ -159,6 +160,11 @@ class BaseHandler(webapp2.RequestHandler):
         # Returns a session using the default cookie key.
         return self.session_store.get_session()
 
+    @login_required
+    def login_required(self):
+        if not 'username' in self.session:
+            error = 'You need to login or signup to post!'
+            return self.redirect('/signup?error=' + error)
 
 class MainPage(BaseHandler):
 
@@ -167,6 +173,8 @@ class MainPage(BaseHandler):
         self.render('home.html', posts=posts, session=self.session)
 
     def post(self):
+        # TODO: ISSUE: users not directed to login required page when attempting to comment while not logged in
+        # TODO: add edit/delete comemnts functionailty
         key = int(self.request.get('key'))
         post = ndb.Key('Post', key).get()
         user = User.query().filter(
@@ -198,6 +206,7 @@ class MainPage(BaseHandler):
             return self.write(json.dumps({'comment': comment,
                                           'time_stamp': str(post.created_at)})
                               )
+        # TODO: add edit and delete functionaily
 
 
 class Signup(BaseHandler):
@@ -287,7 +296,7 @@ class Logout(BaseHandler):
 class NewPost(BaseHandler):
 
     def get(self):
-        if not 'username' in self.session:
+        if 'username' not in self.session:
             error = 'You need to login or signup to post!'
             return self.redirect('/signup?error=' + error)
         return self.render('create_new.html', session=self.session)
@@ -328,7 +337,7 @@ class Article(BaseHandler):
         else:
             self.render('article.html', session=self.session, post=post,
                         error='Comment not inserted.')
-
+        # TODO: add edit and delete functionaily
 
 class Profile(BaseHandler):
 
