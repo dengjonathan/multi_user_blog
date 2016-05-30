@@ -82,6 +82,8 @@ def make_salt(n):
     return salt
 
 # TODO: consolidate password hashing
+
+
 def make_pw_hash(name, pw, salt=None):
     """
     returns hash of name and password with salt of 5 random alpanumeric chars
@@ -132,7 +134,22 @@ class User(ndb.Model):
     likes = ndb.IntegerProperty(repeated=True)
 
 
+# Decorator functions for request Handlers
+def login_required(func):
+    def login_check(self, *args, **kwargs):
+        if 'username' not in self.session:
+            error = 'You need to login or signup to post!'
+            return self.redirect('/signup?error=' + error)
+        else:
+            return func
+    return login_check
+
+
+# helper functions for request Handlers
+
+
 # webapp2 Request Handlers
+
 class BaseHandler(webapp2.RequestHandler):
 
     def render_str(self, template, **params):
@@ -155,16 +172,70 @@ class BaseHandler(webapp2.RequestHandler):
             # Save all sessions.
             self.session_store.save_sessions(self.response)
 
+    # CRUD functionality for web handlers
+    def new_comment(self, post):
+        n = Comment(username=self.session['username'],
+                    comment=comment)
+        post.comments.append(n)
+        post.put()
+        return self.write(json.dumps({'comment': comment,
+                                      'time_stamp': str(post.created_at)})
+                          )
+
+    def edit_comment():
+        pass
+
+    def add_like(self, post, user):
+        post.likes.add(user.username)
+        post.put()
+        user.likes.append(key)
+        user.put()
+        json_string = {'likes': post.likes,
+                       'num_likes': len(post.likes)}
+        return self.write(json.dumps(json_string))
+
+    def unlike(self, post, user):
+        post.likes.remove(user.username)
+        post.put()
+        user.likes.append(key)
+        user.put()
+        json_string = {'likes': post.likes,
+                       'num_likes': len(post.likes)}
+        return self.write(json.dumps(json_string))
+
+    def edit_article():
+        pass
+
+    def delete():
+        pass
+    def new_article():
+        pass
+
+    def handle_post(post, user, data):
+        """Handles CRUD events from client by updating database and sending
+            updated AJAX post to client"""
+
+        key = int(self.request.get('key'))
+        action = self.request.get('action')
+        data = self.request.get('data')
+        post = ndb.Key('Post', key).get()
+        user = User.query().filter(
+            User.username == self.session['username']
+                                  ).fetch()[0]
+        CRUD_actions {
+            'like': self.add_like, 'unlike': self.unlike,
+            'new_comment': self.new_comment, 'edit_comment': self.edit_comment,
+            'delete_article': self.delete_article,
+            'delete_comment': self.delete_comment,
+            'edit_article': self.edit_article
+                    }
+        return CRUD_actions['action'](post, user, data)
+
     @webapp2.cached_property
     def session(self):
         # Returns a session using the default cookie key.
         return self.session_store.get_session()
 
-    @login_required
-    def login_required(self):
-        if not 'username' in self.session:
-            error = 'You need to login or signup to post!'
-            return self.redirect('/signup?error=' + error)
 
 class MainPage(BaseHandler):
 
@@ -174,45 +245,14 @@ class MainPage(BaseHandler):
 
     def post(self):
         # TODO: ISSUE: users not directed to login required page when attempting to comment while not logged in
-        # TODO: add edit/delete comemnts functionailty
-        key = int(self.request.get('key'))
-        post = ndb.Key('Post', key).get()
-        user = User.query().filter(
-            User.username == self.session['username']
-        ).fetch()
-        user = user[0]
-        if self.request.get('like'):
-            post.likes.append(user.username)
-            post.put()
-            user.likes.append(key)
-            user.put()
-            json_string = {'likes': post.likes,
-                           'num_likes': len(post.likes)}
-            return self.write(json.dumps(json_string))
-        if self.request.get('unlike'):
-            post.likes.remove(user.username)
-            post.put()
-            user.likes.append(key)
-            user.put()
-            json_string = {'likes': post.likes,
-                           'num_likes': len(post.likes)}
-            return self.write(json.dumps(json_string))
-        if self.request.get('comment'):
-            comment = self.request.get('comment')
-            n = Comment(username=self.session['username'],
-                        comment=comment)
-            post.comments.append(n)
-            post.put()
-            return self.write(json.dumps({'comment': comment,
-                                          'time_stamp': str(post.created_at)})
-                              )
-        # TODO: add edit and delete functionaily
+
+        return self.handle_post(post, user)
 
 
 class Signup(BaseHandler):
 
     def get(self):
-        self.render('signup.html', session=self.session)
+        self.render('signup.html', session=self.session, params='', error='')
 
     def post(self):
         username = self.request.get('username')
@@ -257,9 +297,10 @@ class Login(BaseHandler):
         username is in database and hashed password
         matches password stored in database
         """
-        if self.session['username']:
-            error = 'You are already logined in as', self.session['username']
-            return self.redirect('/signup?error=' + error)
+        # TODO: when user is not logged in, trying to login will return error due to below check
+        # if self.session['username']:
+        #     error = 'You are already logged in as', self.session['username']
+        #     return self.redirect('/signup?error=' + error)
         username = self.request.get('username')
         password = self.request.get('password')
         user_query = User.query().filter(User.username == username)
@@ -295,10 +336,8 @@ class Logout(BaseHandler):
 
 class NewPost(BaseHandler):
 
+    @login_required
     def get(self):
-        if 'username' not in self.session:
-            error = 'You need to login or signup to post!'
-            return self.redirect('/signup?error=' + error)
         return self.render('create_new.html', session=self.session)
 
     def post(self):
@@ -338,6 +377,7 @@ class Article(BaseHandler):
             self.render('article.html', session=self.session, post=post,
                         error='Comment not inserted.')
         # TODO: add edit and delete functionaily
+
 
 class Profile(BaseHandler):
 
