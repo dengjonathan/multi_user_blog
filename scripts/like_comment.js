@@ -5,7 +5,8 @@ $(document).ready(function() {
         var post_id = this.id;
         $.post('/', {
             'key': post_id,
-            'like': true
+            'action': 'add_like',
+            'data': ''
         }).done(function(response) {
             response = $.parseJSON(response);
             $('div#' + post_id + '> p').text(response['num_likes'] + ' people like this!');
@@ -21,7 +22,8 @@ $(document).ready(function() {
         var post_id = this.id;
         $.post('/', {
             'key': post_id,
-            'unlike': true
+            'action': 'unlike',
+            'data': ''
         }).done(function(response) {
             response = $.parseJSON(response);
             $('div#' + post_id + '> p').text(response['num_likes'] + ' people like this!');
@@ -39,7 +41,8 @@ $(document).ready(function() {
         var comment = $('div.new_comment input:text').val();
         $.post('/', {
             'key': post_id,
-            'comment': comment
+            'action': 'new_comment',
+            'data': comment
         }).done(function(response) {
             response = $.parseJSON(response);
             var comment = response['comment'];

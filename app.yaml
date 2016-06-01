@@ -1,11 +1,21 @@
-application: 'rot13-1302'
+application: multiuserblog
+version: 2
 runtime: python27
 api_version: 1
 threadsafe: true
 
 handlers:
+- url: /stylesheets
+  static_dir: stylesheets
+
+- url: /img
+  static_dir: img
+
+- url: /scripts
+  static_dir: scripts
+
 - url: /.*
-  script: templates.app
+  script: blog.app
 
 libraries:
 - name: webapp2

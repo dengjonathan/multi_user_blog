@@ -13,7 +13,7 @@
     <div class='social-buttons row'>
         <div class='likes col-md-6' id={{post.key | filterKey}} class='likes-total'>
             <p>
-                {{post.likes |length}} people like this! {% if session['username'] %}
+                {{post.likes|length}} people like this! {% if session['username'] %}
                 <button class='btn btn-primary unlike hidden' id='{{post.key | filterKey }}'>UnLike</button>
                 <button class='btn btn-primary like-btn' id='{{post.key | filterKey }}'>Like</button>
                 {% else %} {% endif %}
@@ -26,7 +26,9 @@
                 <ul class='comments-list' id='{{post.key|filterKey }}comments'>
                     {% for comment in post.comments[-5:] %}
                     <li>
-                        {{comment.username}} says {{comment.comment}}! {{comment.created_at.replace(microsecond=0)}}
+                        <a>{{comment.username}} says {{comment.comment}}! {{comment.created_at.replace(microsecond=0)}}</a>
+                        <button class = 'btn btn-default edit_comment btn-sm' id='{{post.key | filterKey }}'>Edit</button>
+                        <button class = 'btn btn-default delete_comment btn-sm' id='{{post.key | filterKey }}'>Delete</button>
                     </li>
                     {% endfor %}
                 </ul>
@@ -42,5 +44,9 @@
                     <button class="new_comment btn btn-primary" id='{{post.key | filterKey }}'>New Comment</button>
                 </div>
             </div>
+        </div>
+        <div>
+    <button class = 'btn btn-primary delete_comment btn-sm' id='{{post.key | filterKey }}'>Edit Post</button>
+        <button class = 'btn btn-primary delete_comment btn-sm btn-danger' id='{{post.key | filterKey }}'>Delete Post</button>
         </div>
     </div>

@@ -8,7 +8,6 @@ import random
 import json
 import time
 
-
 # Google App Engine Imports
 import webapp2
 from google.appengine.ext import ndb
@@ -23,14 +22,11 @@ jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
                                autoescape=True)
 
 # Jinja2 filter allowing use of ndb Keys as div ids in html templates
-
-
 def filterKey(Key):
     """converts ndb Key object to str object for use in jinja filters"""
-    return str(Key).split(', ')[1][:-1]
+    return int(str((Key)).split(', ')[1][:-1])
 
 jinja_env.filters['filterKey'] = filterKey
-
 
 # sign-in/ password helper functions
 def valid_username(username):
@@ -49,8 +45,6 @@ def valid_email(email):
     return email_RE.match(email)
 
 # hash functions
-
-
 def hash_str(s):
     s = str(s)
     return hmac.new(CLIENT_SECRET, s).hexdigest()
@@ -81,16 +75,13 @@ def make_salt(n):
     salt = ''.join(choices[random.randint(0, len(choices))] for i in range(n))
     return salt
 
-# TODO: consolidate password hashing
 
-
-def make_pw_hash(name, pw, salt=None):
+def make_pw_hash(name, pw):
     """
     returns hash of name and password with salt of 5 random alpanumeric chars
     User can specify own salt, default is randomly generated
     """
-    if not salt:
-        salt = make_salt(5)
+    salt = make_salt(5)
     hash = hashlib.sha256(name + pw + salt).hexdigest()
     return '%s|%s' % (hash, salt)
 
@@ -104,9 +95,6 @@ def valid_password(name, pw, hash):
         return False
 
 # ndb database classes
-from google.appengine.ext import ndb
-
-
 class Comment(ndb.Model):
     """Model for comments which are a StructuredProperty of Posts"""
     username = ndb.StringProperty()
@@ -136,20 +124,18 @@ class User(ndb.Model):
 
 # Decorator functions for request Handlers
 def login_required(func):
-    def login_check(self, *args, **kwargs):
+    def func_wrapper(*args, **kwargs):
+        self = args[0]
         if 'username' not in self.session:
             error = 'You need to login or signup to post!'
+            print error
             return self.redirect('/signup?error=' + error)
         else:
-            return func
-    return login_check
-
-
-# helper functions for request Handlers
+            return func(*args, **kwargs)
+    return func_wrapper
 
 
 # webapp2 Request Handlers
-
 class BaseHandler(webapp2.RequestHandler):
 
     def render_str(self, template, **params):
@@ -172,24 +158,61 @@ class BaseHandler(webapp2.RequestHandler):
             # Save all sessions.
             self.session_store.save_sessions(self.response)
 
-    # CRUD functionality for web handlers
-    def new_comment(self, post):
-        n = Comment(username=self.session['username'],
-                    comment=comment)
+    @webapp2.cached_property
+    def session(self):
+        # Returns a session using the default cookie key.
+        return self.session_store.get_session()
+
+
+class CRUDHandler(BaseHandler):
+    """Class that contains all CRUD methods"""
+
+    def parse_AJAX(self):
+        """
+        Helper method for CRUD updates. Converts AJAX request from JSON to
+        datatypes useful for database access
+        """
+        key = int(self.request.get('key'))
+        action = self.request.get('action')
+        data = self.request.get('data')
+        post = ndb.Key('Post', key).get()
+        user = User.query().filter(
+            User.username == self.session['username']
+                                  ).fetch()[0]
+        return action, user, post, data
+
+    def new_comment(self, user, post, data, *args):
+        n = Comment(username=user.username,
+                    comment=data)
         post.comments.append(n)
         post.put()
-        return self.write(json.dumps({'comment': comment,
-                                      'time_stamp': str(post.created_at)})
-                          )
+        return self.write(json.dumps({'comment': data,
+                                      'time_stamp': str(post.created_at)}))
 
-    def edit_comment():
-        pass
+    def edit_comment(self, user, post, data, comment):
+        comment = Comment.query().filter()
+        comment.comment = n.data
+        comment.put()
+        return self.write(json.dumps({'comment_key': comment,
+                                      'comment': data,
+                                      'time_stamp': str(post.created_at)}))
 
-    def add_like(self, post, user):
-        post.likes.add(user.username)
+    def delete_comment(self, user, post, comment, *args):
+        # TODO: figure out how to remove comment class from table
+        comment = Comment.query().filter()
+        comment.key.delete()
+        return self.write(json.dumps({'comment_key': comment,
+                                      'comment': data,
+                                      'time_stamp': str(post.created_at)}))
+
+    def add_like(self, post, user, *args):
+        post.likes.append(filterKey(user.key))
         post.put()
-        user.likes.append(key)
+        user.likes.append(str(filterKey(post.key)))
         user.put()
+        print '###', post.likes
+        print '###', len(post.likes)
+        print post
         json_string = {'likes': post.likes,
                        'num_likes': len(post.likes)}
         return self.write(json.dumps(json_string))
@@ -206,47 +229,27 @@ class BaseHandler(webapp2.RequestHandler):
     def edit_article():
         pass
 
-    def delete():
+    def delete_article():
         pass
+
     def new_article():
         pass
 
-    def handle_post(post, user, data):
-        """Handles CRUD events from client by updating database and sending
-            updated AJAX post to client"""
+    def CRUD_action(self):
+        action, user, post, data = self.parse_AJAX()
+        print '####', self.parse_AJAX()
+        return getattr(self, action)(user, post, data)
+        # return self.action(user, post, data)
 
-        key = int(self.request.get('key'))
-        action = self.request.get('action')
-        data = self.request.get('data')
-        post = ndb.Key('Post', key).get()
-        user = User.query().filter(
-            User.username == self.session['username']
-                                  ).fetch()[0]
-        CRUD_actions {
-            'like': self.add_like, 'unlike': self.unlike,
-            'new_comment': self.new_comment, 'edit_comment': self.edit_comment,
-            'delete_article': self.delete_article,
-            'delete_comment': self.delete_comment,
-            'edit_article': self.edit_article
-                    }
-        return CRUD_actions['action'](post, user, data)
-
-    @webapp2.cached_property
-    def session(self):
-        # Returns a session using the default cookie key.
-        return self.session_store.get_session()
-
-
-class MainPage(BaseHandler):
+class MainPage(CRUDHandler):
 
     def get(self):
         posts = Post.query().order(-Post.created_at)
         self.render('home.html', posts=posts, session=self.session)
 
+    @login_required
     def post(self):
-        # TODO: ISSUE: users not directed to login required page when attempting to comment while not logged in
-
-        return self.handle_post(post, user)
+        self.CRUD_action()
 
 
 class Signup(BaseHandler):
@@ -291,16 +294,13 @@ class Login(BaseHandler):
     def get(self):
         self.render('login.html', session=self.session)
 
+    @login_required
     def post(self):
         """
         Takes username and password from html form and checks to ensure
         username is in database and hashed password
         matches password stored in database
         """
-        # TODO: when user is not logged in, trying to login will return error due to below check
-        # if self.session['username']:
-        #     error = 'You are already logged in as', self.session['username']
-        #     return self.redirect('/signup?error=' + error)
         username = self.request.get('username')
         password = self.request.get('password')
         user_query = User.query().filter(User.username == username)
@@ -334,12 +334,13 @@ class Logout(BaseHandler):
                         session=self.session)
 
 
-class NewPost(BaseHandler):
+class NewPost(CRUDHandler):
 
     @login_required
     def get(self):
         return self.render('create_new.html', session=self.session)
 
+    @login_required
     def post(self):
         title = self.request.get('title')
         num = self.request.get('like')
@@ -358,29 +359,21 @@ class NewPost(BaseHandler):
                         session=self.session, num=num)
 
 
-class Article(BaseHandler):
+class Article(CRUDHandler):
 
     def get(self):
         key = int(self.request.get('key'))
         post = ndb.Key('Post', key).get()
         self.render('article.html', session=self.session, post=post)
 
+    @login_required
     def post(self):
-        title = self.request.get('comment')
-        username = self.session.get('username')
-        if title and username:
-            a = Comment(comment=comment,
-                        username=username
-                        )
-            a.put()
-        else:
-            self.render('article.html', session=self.session, post=post,
-                        error='Comment not inserted.')
-        # TODO: add edit and delete functionaily
+        return self.CRUD_action()
 
 
 class Profile(BaseHandler):
 
+    @login_required
     def get(self):
         username = self.session['username']
         user = User.query().filter(User.username == username).fetch(1)[0]
