@@ -7,6 +7,7 @@ import hashlib
 import random
 import json
 import time
+import warnings
 
 # Google App Engine Imports
 import webapp2
@@ -22,6 +23,8 @@ jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
                                autoescape=True)
 
 # Jinja2 filter allowing use of ndb Keys as div ids in html templates
+
+
 def filterKey(Key):
     """converts ndb Key object to str object for use in jinja filters"""
     return int(str((Key)).split(', ')[1][:-1])
@@ -29,6 +32,8 @@ def filterKey(Key):
 jinja_env.filters['filterKey'] = filterKey
 
 # sign-in/ password helper functions
+
+
 def valid_username(username):
     """returns True if username entered and is valid"""
     user_RE = re.compile("^[a-zA-Z0-9_-]{3,20}$")
@@ -45,6 +50,8 @@ def valid_email(email):
     return email_RE.match(email)
 
 # hash functions
+
+
 def hash_str(s):
     s = str(s)
     return hmac.new(CLIENT_SECRET, s).hexdigest()
@@ -76,12 +83,13 @@ def make_salt(n):
     return salt
 
 
-def make_pw_hash(name, pw):
+def make_pw_hash(name, pw, salt=None):
     """
     returns hash of name and password with salt of 5 random alpanumeric chars
     User can specify own salt, default is randomly generated
     """
-    salt = make_salt(5)
+    if not salt:
+        salt = make_salt(5)
     hash = hashlib.sha256(name + pw + salt).hexdigest()
     return '%s|%s' % (hash, salt)
 
@@ -95,6 +103,8 @@ def valid_password(name, pw, hash):
         return False
 
 # ndb database classes
+
+
 class Comment(ndb.Model):
     """Model for comments which are a StructuredProperty of Posts"""
     username = ndb.StringProperty()
@@ -128,14 +138,30 @@ def login_required(func):
         self = args[0]
         if 'username' not in self.session:
             error = 'You need to login or signup to post!'
-            print error
             return self.redirect('/signup?error=' + error)
         else:
             return func(*args, **kwargs)
     return func_wrapper
 
 
+def permissions_check(func):
+    """checks if user is creator of object"""
+    def func_wrapper(*args, **kwargs):
+        self = args[0]
+        username = args[1].username
+        if self.session['username'] != username:
+            # TODO what do you do if user doesn't have permission?
+            error = 'You don\'t have permission to edit this object!'
+            print error
+            warnings.warn(error)
+            return self.get(error=error)
+        else:
+            return func(*args, **kwargs)
+    return func_wrapper
+
 # webapp2 Request Handlers
+
+
 class BaseHandler(webapp2.RequestHandler):
 
     def render_str(self, template, **params):
@@ -176,9 +202,10 @@ class CRUDHandler(BaseHandler):
         action = self.request.get('action')
         data = self.request.get('data')
         post = ndb.Key('Post', key).get()
+        # TODO: change this var to user that created the post
         user = User.query().filter(
-            User.username == self.session['username']
-                                  ).fetch()[0]
+            User.username == post.username
+        ).fetch()[0]
         return action, user, post, data
 
     def new_comment(self, user, post, data, *args):
@@ -189,65 +216,68 @@ class CRUDHandler(BaseHandler):
         return self.write(json.dumps({'comment': data,
                                       'time_stamp': str(post.created_at)}))
 
-    def edit_comment(self, user, post, data, comment):
-        comment = Comment.query().filter()
-        comment.comment = n.data
-        comment.put()
-        return self.write(json.dumps({'comment_key': comment,
-                                      'comment': data,
-                                      'time_stamp': str(post.created_at)}))
+    @permissions_check
+    def edit_comment(self, user, post, data, *args):
+        new_comment = self.request.get('edit_comment')
+        post.put()
+        key = str(filterKey(post.key))
+        return self.redirect('/article?key=' + key)
 
-    def delete_comment(self, user, post, comment, *args):
-        # TODO: figure out how to remove comment class from table
-        comment = Comment.query().filter()
-        comment.key.delete()
-        return self.write(json.dumps({'comment_key': comment,
-                                      'comment': data,
-                                      'time_stamp': str(post.created_at)}))
+    @permissions_check
+    def delete_comment(self, user, post, data, *args):
+        post.comments = [c for c in post.comments if c.comment != data]
+        post.put()
+        return self.write(json.dumps({'deleted': True}))
 
     def add_like(self, post, user, *args):
         post.likes.append(filterKey(user.key))
         post.put()
         user.likes.append(str(filterKey(post.key)))
         user.put()
-        print '###', post.likes
-        print '###', len(post.likes)
-        print post
         json_string = {'likes': post.likes,
                        'num_likes': len(post.likes)}
         return self.write(json.dumps(json_string))
 
-    def unlike(self, post, user):
-        post.likes.remove(user.username)
+    def unlike(self, post, user, *args):
+        curr_user = User.query().filter(
+            User.username == self.session.get('username')
+        ).fetch()[0]
+        post.likes = [c for c in post.likes if c != filterKey(curr_user.key)]
         post.put()
-        user.likes.append(key)
+        curr_user.likes = [c for c in curr_user.likes if c != filterKey(post.key)]
         user.put()
         json_string = {'likes': post.likes,
                        'num_likes': len(post.likes)}
         return self.write(json.dumps(json_string))
 
-    def edit_article():
-        pass
+    @permissions_check
+    def edit_article(self, user, post, data, *args):
+        post.message = data
+        post.title = self.request.get('title')
+        post.put()
+        action =self.request.get('action')
+        key = str(filterKey(post.key))
+        return self.redirect('/article?key=' + key)
 
-    def delete_article():
-        pass
+    @permissions_check
+    def delete_article(self, user, post, *args):
+        post.key.delete()
+        return self.redirect('/')
 
-    def new_article():
-        pass
-
+    # function that will call correct method above using request inputs
+    @login_required
     def CRUD_action(self):
         action, user, post, data = self.parse_AJAX()
-        print '####', self.parse_AJAX()
         return getattr(self, action)(user, post, data)
-        # return self.action(user, post, data)
+
 
 class MainPage(CRUDHandler):
 
-    def get(self):
+    def get(self, error=''):
         posts = Post.query().order(-Post.created_at)
-        self.render('home.html', posts=posts, session=self.session)
+        self.render('home.html', posts=posts,
+                    error=error, session=self.session)
 
-    @login_required
     def post(self):
         self.CRUD_action()
 
