@@ -118,7 +118,7 @@ class Post(ndb.Model):
     message = ndb.TextProperty()
     created_at = ndb.DateTimeProperty(auto_now_add=True)
     username = ndb.StringProperty()
-    likes = ndb.StringProperty(repeated=True)
+    likes = ndb.IntegerProperty(repeated=True)
     comments = ndb.StructuredProperty(Comment, repeated=True)
 
 
@@ -202,7 +202,6 @@ class CRUDHandler(BaseHandler):
         action = self.request.get('action')
         data = self.request.get('data')
         post = ndb.Key('Post', key).get()
-        # TODO: change this var to user that created the post
         user = User.query().filter(
             User.username == post.username
         ).fetch()[0]
@@ -230,10 +229,13 @@ class CRUDHandler(BaseHandler):
         return self.write(json.dumps({'deleted': True}))
 
     def add_like(self, post, user, *args):
-        post.likes.append(filterKey(user.key))
-        post.put()
-        user.likes.append(str(filterKey(post.key)))
-        user.put()
+        post = ndb.Key('Post', 6473924464345088).get()
+        if filterKey(user.key) not in post.likes:
+            post.likes.append(filterKey(user.key))
+            post.put()
+        if filterKey(post.key) not in user.likes:
+            user.likes.append(filterKey(post.key))
+            user.put()
         json_string = {'likes': post.likes,
                        'num_likes': len(post.likes)}
         return self.write(json.dumps(json_string))
@@ -242,9 +244,13 @@ class CRUDHandler(BaseHandler):
         curr_user = User.query().filter(
             User.username == self.session.get('username')
         ).fetch()[0]
-        post.likes = [c for c in post.likes if c != filterKey(curr_user.key)]
+        post.likes = set(
+            [c for c in post.likes if c != filterKey(curr_user.key)]
+        )
         post.put()
-        curr_user.likes = [c for c in curr_user.likes if c != filterKey(post.key)]
+        curr_user.likes = set(
+            [c for c in curr_user.likes if c != filterKey(post.key)]
+        )
         user.put()
         json_string = {'likes': post.likes,
                        'num_likes': len(post.likes)}
@@ -255,7 +261,7 @@ class CRUDHandler(BaseHandler):
         post.message = data
         post.title = self.request.get('title')
         post.put()
-        action =self.request.get('action')
+        action = self.request.get('action')
         key = str(filterKey(post.key))
         return self.redirect('/article?key=' + key)
 
@@ -311,7 +317,6 @@ class Signup(BaseHandler):
             self.render('signup.html', error=error,
                         params=params, session=self.session)
         else:
-            self.session['username'] = username
             n = User(username=username,
                      password=make_pw_hash(username, password),
                      email=email)
@@ -324,7 +329,6 @@ class Login(BaseHandler):
     def get(self):
         self.render('login.html', session=self.session)
 
-    @login_required
     def post(self):
         """
         Takes username and password from html form and checks to ensure

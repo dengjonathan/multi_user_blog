@@ -10,25 +10,27 @@
     </div>
     </br>
 
+    {% if session['username'] %}
     <div class='social-buttons row'>
         <div class='likes col-md-6' id={{post.key | filterKey}} class='likes-total'>
             <p>
-                {{post.likes|length}} people like this! </p>{% if session['username'] %}
+                {{post.likes|length}} people like this! </p>
             <button class='btn btn-primary unlike hidden' id='{{post.key | filterKey }}'>UnLike</button>
             <button class='btn btn-primary like-btn' id='{{post.key | filterKey }}'>Like</button>
-            {% else %} {% endif %}
-
         </div>
-
-        <div class='comments col-md-9'>
-            Comments
-            <div class='comments' id='{{post.key | filterKey }}'>
-                <ul class='comments-list' id='{{post.key|filterKey }}'>
-                    {% for comment in post.comments %}
-                    <li class='comment' id='{{comment.comment}}'>
-                        <a>{{comment.username}} says</a>
-                        <a>{{comment.comment}}</a>!
-                        <a>{{comment.created_at.replace(microsecond=0)}}</a>
+    </div>
+    {% endif %}
+  </br>
+    <div class='comments'>
+        <p><span>{{post.comments | length}}</span> Comments</p>
+        <!-- <div class='comments' id='{{post.key | filterKey }}'> -->
+            <ul class='comments-list' id='{{post.key|filterKey }}'>
+                {% for comment in post.comments %}
+                <li class='comment' id='{{comment.comment}}'>
+                    <a>{{comment.username}} says</a>
+                    <a>{{comment.comment}}</a>!
+                    <a>{{comment.created_at.replace(microsecond=0)}}</a>
+                    {% if session['username'] %}
                         <form class='edit_comment hidden' id='{{post.key | filterKey }}' method='post'>
                             <!--hidden inputs to give necessary info to post method -->
                             <input type='hidden' name='key' value='{{post.key | filterKey }}' />
@@ -36,39 +38,39 @@
                             <input type='hidden' name='data' value='{{comment.comment}}' />
                             <p>Edit Comment</p>
                             <input name='edit_comment' id='{{post.key | filterKey }}' value='{{comment.comment}}'>
-                            <input type='submit' name ='submit'>
+                            <input type='submit' name='submit'>
                         </form>
                         <button class='btn btn-default edit_comment btn-sm' id='{{post.key | filterKey }}'>Edit</button>
                         <button class='btn btn-default delete_comment btn-sm' id='{{post.key | filterKey }}'>Delete</button>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            </br>
-            {% if session['username'] %}
-            <div class='new_comment'>
-                {% else %}
-                <div class='new_comment hidden'>
-                    {% endif %} New Comment
-                    <input name="comment" type='text'>
-                    <input type='hidden' name='key' value='{{post.key | filterKey}}' />
-                    <button class="new_comment btn btn-primary" id='{{post.key | filterKey }}'>New Comment</button>
-                </div>
-            </div>
-        </div>
-        <div class='edit_article' id='{{post.key | filterKey }}'>
-            <form class='edit_article hidden' id='{{post.key | filterKey }}' method='post'>
-                <input type='hidden' name='key' value='{{post.key | filterKey }}' />
-                <input type='hidden' name='action' value='edit_article' />
-                <h4>Edit article</h4>
-                <h5>Edit Title</h5>
-                <input type='text' name='title' value='{{post.title}}' />
-                <h5>Edit Message</h5>
-                <textarea name='data' id='{{post.key | filterKey }}'>{{post.message}}</textarea>
-                </br>
-                <input type='submit' name='submit' />
-            </form>
-            <button class='btn btn-primary edit_article btn-sm' id='{{post.key | filterKey }}'>Edit Post</button>
-            <button class='btn btn-primary delete_article btn-sm btn-danger' id='{{post.key | filterKey }}'>Delete Post</button>
-        </div>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        <!-- </div> -->
     </div>
+
+    {% if session['username'] %}
+    <div class='new_comment'>
+        <p>New Comment</p>
+        <input name="comment" type='text'>
+        <input type='hidden' name='key' value='{{post.key | filterKey}}' />
+        <button class="new_comment btn btn-primary" id='{{post.key | filterKey }}'>New Comment</button>
+
+    <div class='edit_article' id='{{post.key | filterKey }}'>
+        <form class='edit_article hidden' id='{{post.key | filterKey }}' method='post'>
+            <input type='hidden' name='key' value='{{post.key | filterKey }}' />
+            <input type='hidden' name='action' value='edit_article' />
+            <h4>Edit article</h4>
+            <h5>Edit Title</h5>
+            <input type='text' name='title' value='{{post.title}}' />
+            <h5>Edit Message</h5>
+            <textarea name='data' id='{{post.key | filterKey }}'>{{post.message}}</textarea>
+            </br>
+            <input type='submit' name='submit' />
+        </form>
+        <button class='btn btn-primary edit_article btn-sm' id='{{post.key | filterKey }}'>Edit Post</button>
+        <button class='btn btn-primary delete_article btn-sm btn-danger' id='{{post.key | filterKey }}'>Delete Post</button>
+    </div>
+
+    {% endif %}
+</div>
