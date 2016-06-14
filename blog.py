@@ -212,12 +212,17 @@ class CRUDHandler(BaseHandler):
                     comment=data)
         post.comments.append(n)
         post.put()
-        return self.write(json.dumps({'comment': data,
-                                      'time_stamp': str(post.created_at)}))
+        key = str(filterKey(post.key))
+        return self.redirect('/article?key=' + key)
 
     @permissions_check
     def edit_comment(self, user, post, data, *args):
         new_comment = self.request.get('edit_comment')
+        old_comment = self.request.get('data')
+        print '###', old_comment, new_comment
+        comment = [c for c in post.comments if c.comment == old_comment][0]
+        index = post.comments.index(comment)
+        post.comments[index].comment = new_comment
         post.put()
         key = str(filterKey(post.key))
         return self.redirect('/article?key=' + key)
@@ -262,8 +267,7 @@ class CRUDHandler(BaseHandler):
         post.title = self.request.get('title')
         post.put()
         action = self.request.get('action')
-        key = str(filterKey(post.key))
-        return self.redirect('/article?key=' + key)
+        return self.redirect('/article?key=' + str(filterKey(post.key)))
 
     @permissions_check
     def delete_article(self, user, post, *args):
@@ -274,6 +278,7 @@ class CRUDHandler(BaseHandler):
     @login_required
     def CRUD_action(self):
         action, user, post, data = self.parse_AJAX()
+        print '###CRUD_action', action, user, post, data
         return getattr(self, action)(user, post, data)
 
 

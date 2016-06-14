@@ -64,20 +64,14 @@ $('button.edit_article').click(function() {
 
 // when click delete button deletes article
 $('button.delete_article').click(function() {
-    var post_id = this.id;
-    $.post('/', {
-        'key': post_id,
-        'action': 'delete_article'
-    }).done(function(response) {
-        window.location.replace('/');
-        $('div#' + post_id + '.article').replaceWith('');
-    }).fail(function() {
-        alert('Failed to reach server');
-    });
+    $('form#' + this.id + '.edit_article').toggleClass('hidden');
+    $(this).text($(this).text() == 'Edit Post' ? 'Cancel' : 'Edit Post');
+    $('button#' + this.id + '.delete_article').toggleClass('hidden');
 });
 
 // Edit comment form
 $('button.edit_comment').click(function() {
+    console.log($(this).parent()[0].id)
     $('form#' + this.id + '.edit_comment').toggleClass('hidden');
     $(this).text($(this).text() == 'Edit' ? 'Cancel' : 'Edit');
     $('button#' + this.id + '.delete_comment').toggleClass('hidden');
@@ -94,7 +88,6 @@ $('input.submit_edit_comment').click(function() {
     $.post('/', {
         'key': post_id,
         'action': 'edit_comment',
-        // TODO: this is a nightmare heere - how to reference comments?j
         'data': {
             'comment_id': comment.attr('id'),
             'edit_comment': edit_comment
