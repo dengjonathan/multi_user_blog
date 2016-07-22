@@ -11,12 +11,16 @@
     </br>
 
     {% if session['username'] %}
-        <div class='likes' id={{post.key | filterKey}} class='likes-total'>
-            <h4>{{post.likes|length}} people like this!</h4>
-              <button class='btn btn-primary unlike hidden' id='{{post.key | filterKey }}'>UnLike</button>
-              <button class='btn btn-primary like-btn' id='{{post.key | filterKey }}'>Like</button>
+    <div class='likes' id={{post.key | filterKey}} class='likes-total'>
+        <h4>{{post.likes|length}} people like this!</h4>
+        <form method='post'>
+            <!-- <input type='hidden' name='key' value='{{post.key | filterKey }}' />
+            <input type='hidden' name='action' value='add_like' />
+            <input type='submit' class='btn btn-default edit_comment btn-sm' value='Like'> -->
+            <input
+        </form>
 
-        </div>
+    </div>
     {% endif %}
     <div class='comments'>
         <h4><span>{{post.comments | length}}</span> Comments</h4>
@@ -27,14 +31,23 @@
                 <a>{{comment.username}} says</a>
                 <a>{{comment.comment}}</a>!
                 <a>{{comment.created_at.replace(microsecond=0)}}</a> {% if session['username'] %}
-                <form class='edit_comment hidden' id='{{post.comments.index(comment) + (post.key | filterKey )}}' method='post'>
+                <div class='edit_comment hidden' id='{{post.comments.index(comment) + (post.key | filterKey )}}'>
+                    <form method='post'>
+                        <!--hidden inputs to give necessary info to post method -->
+                        <input type='hidden' name='key' value='{{post.key | filterKey }}' />
+                        <input type='hidden' name='action' value='edit_comment' />
+                        <input type='hidden' name='data' value='{{comment.comment}}' />
+                        <input name='edit_comment' value='{{comment.comment}}'>
+                        <input type='submit' class='btn btn-default edit_comment btn-sm' value='Update comment'>
+                    </form>
+                </div>
+                <form class='delete_comment hidden' id='{{post.comments.index(comment) + (post.key | filterKey )}}' method='post'>
                     <!--hidden inputs to give necessary info to post method -->
                     <input type='hidden' name='key' value='{{post.key | filterKey }}' />
-                    <input type='hidden' name='action' value='edit_comment' />
+                    <input type='hidden' name='action' value='delete_comment' />
                     <input type='hidden' name='data' value='{{comment.comment}}' />
-                    <p>Edit Comment</p>
-                    <input name='edit_comment' value='{{comment.comment}}'>
-                    <input type='submit' name='submit'>
+                    <p>Are you sure you want to delete this comment?</p>
+                    <input class='btn btn-default edit_comment btn-sm' type='submit' value='Delete'>
                 </form>
                 <button class='btn btn-default edit_comment btn-sm' id='{{post.comments.index(comment) + (post.key | filterKey )}}'>Edit</button>
                 <button class='btn btn-default delete_comment btn-sm' id='{{post.comments.index(comment) + (post.key | filterKey )}}'>Delete</button>
@@ -46,19 +59,19 @@
     </div>
 
     {% if session['username'] %}
-    <form method='post'>
-        <div class='new_comment'>
+    <div class='new_comment'>
+        <form method='post'>
             <input name="data" type='text'>
             <input type='hidden' name='key' value='{{post.key | filterKey}}' />
             <input type='hidden' name='action' value='new_comment' />
             <input class='btn-default btn' type='submit' value='New Comment' />
-    </form>
+        </form>
+    </div>
 
-    <div class='edit_article' id='{{post.key | filterKey }}'>
-        <form class='edit_article hidden' id='{{post.key | filterKey }}' method='post'>
+    <div class='edit_article hidden' id='{{post.key | filterKey }}'>
+        <form method='post'>
             <input type='hidden' name='key' value='{{post.key | filterKey }}' />
             <input type='hidden' name='action' value='edit_article' />
-            <h4>Edit article</h4>
             <h5>Edit Title</h5>
             <input type='text' name='title' value='{{post.title}}' />
             <h5>Edit Message</h5>
@@ -66,9 +79,23 @@
             </br>
             <input type='submit' name='submit' />
         </form>
+    </div>
+
+    <div class='delete_article hidden' id='{{post.key | filterKey}}'>
+        <form method='post'>
+            <!--hidden inputs to give necessary info to post method -->
+            <input type='hidden' name='key' value='{{post.key | filterKey }}' />
+            <input type='hidden' name='action' value='delete_article' />
+            <p>Are you sure you want to delete this post?</p>
+            <input class='btn btn-default btn-sm' type='submit' value='Delete'>
+        </form>
+    </div>
+
+    <div>
         <button class='btn btn-primary edit_article btn-sm' id='{{post.key | filterKey }}'>Edit Post</button>
         <button class='btn btn-primary delete_article btn-sm btn-danger' id='{{post.key | filterKey }}'>Delete Post</button>
     </div>
-
     {% endif %}
-    </div>
+</div>
+
+<script src='/scripts/upvote.js'></script>

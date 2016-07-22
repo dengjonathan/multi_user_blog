@@ -7,11 +7,10 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-    <script src='/scripts/app.js'></script>
-
+    <script src='/scripts/like_comment.js'></script>
     <!-- Hidden Session Variables-->
-    <p class = 'hidden' id='session-username'>
-      {{session.username}}
+    <p class='hidden' id='session-username'>
+        {{session.username}}
     </p>
 </head>
 
@@ -33,21 +32,20 @@
                         <li class><a href="/newpost">New Post</a></li>
 
                         <li class='dropdown'>
-                            <a class="dropdown-toggle" data-toggle='dropdown' href="#"
-                             role="button" aria-haspopup="true" aria-expanded="false">
+                            <a class="dropdown-toggle" data-toggle='dropdown' href="#" role="button" aria-haspopup="true" aria-expanded="false">
                               Logged In as {{session['username']}}
                             <span class="caret"></span></a>
                             <ul class='dropdown-menu'>
                                 <li><a href='/profile'>Profile</a></li>
-                                <li role ='seperator' class='divider'></li>
+                                <li role='seperator' class='divider'></li>
                                 <li><a href='/logout'>Logout</a></li>
-                           </ul>
+                            </ul>
                         </li>
-                      {% else %}
-                            <li><a href='/login'>Login</a></li>
-                            <li><a href='/signup'>Register</a></li>
-                            {% endif %}
-                  </ul>
+                        {% else %}
+                        <li><a href='/login'>Login</a></li>
+                        <li><a href='/signup'>Register</a></li>
+                        {% endif %}
+                    </ul>
                 </div>
             </div>
         </nav>

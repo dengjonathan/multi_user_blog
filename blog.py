@@ -231,38 +231,10 @@ class CRUDHandler(BaseHandler):
     def delete_comment(self, user, post, data, *args):
         post.comments = [c for c in post.comments if c.comment != data]
         post.put()
-        return self.write(json.dumps({'deleted': True}))
-
-    def add_like(self, post, user, *args):
-        post = ndb.Key('Post', 6473924464345088).get()
-        if filterKey(user.key) not in post.likes:
-            post.likes.append(filterKey(user.key))
-            post.put()
-        if filterKey(post.key) not in user.likes:
-            user.likes.append(filterKey(post.key))
-            user.put()
-        json_string = {'likes': post.likes,
-                       'num_likes': len(post.likes)}
-        return self.write(json.dumps(json_string))
-
-    def unlike(self, post, user, *args):
-        curr_user = User.query().filter(
-            User.username == self.session.get('username')
-        ).fetch()[0]
-        post.likes = set(
-            [c for c in post.likes if c != filterKey(curr_user.key)]
-        )
-        post.put()
-        curr_user.likes = set(
-            [c for c in curr_user.likes if c != filterKey(post.key)]
-        )
-        user.put()
-        json_string = {'likes': post.likes,
-                       'num_likes': len(post.likes)}
-        return self.write(json.dumps(json_string))
 
     @permissions_check
     def edit_article(self, user, post, data, *args):
+        print '### called'
         post.message = data
         post.title = self.request.get('title')
         post.put()
@@ -271,16 +243,50 @@ class CRUDHandler(BaseHandler):
 
     @permissions_check
     def delete_article(self, user, post, *args):
+        print 'delete method called'
         post.key.delete()
         return self.redirect('/')
 
     # function that will call correct method above using request inputs
     @login_required
     def CRUD_action(self):
+        print 'crud action called'
         action, user, post, data = self.parse_AJAX()
-        print '###CRUD_action', action, user, post, data
-        return getattr(self, action)(user, post, data)
+        print action, user
+        getattr(self, action)(user, post, data)
+        key = str(filterKey(post.key))
+        return self.redirect('/')
 
+    # not CRUD methods
+
+    def add_like(action, user, post, data):
+        if filterKey(user.key) not in post.likes:
+            post.likes.append(filterKey(user.key))
+            post.put()
+        if filterKey(post.key) not in user.likes:
+            user.likes.append(filterKey(post.key))
+            user.put()
+        # json_string = {'num_likes': len(post.likes)}
+        # print json_string
+        # return self.write(json.dumps(json_string))
+
+    # def unlike(self, post, user, *args):
+    #     print 'this func'
+    #     curr_user = User.query().filter(
+    #         User.username == self.session.get('username')
+    #     ).fetch()[0]
+    #     post.likes = set(
+    #         [c for c in post.likes if c != filterKey(curr_user.key)]
+    #     )
+    #     post.put()
+    #     curr_user.likes = set(
+    #         [c for c in curr_user.likes if c != filterKey(post.key)]
+    #     )
+    #     user.put()
+    #     print len(post.likes)
+    #     # json_string = {'likes': post.likes,
+    #     #                'num_likes': len(post.likes)}
+    #     # return self.write(json.dumps(json_string))
 
 class MainPage(CRUDHandler):
 
@@ -290,7 +296,7 @@ class MainPage(CRUDHandler):
                     error=error, session=self.session)
 
     def post(self):
-        self.CRUD_action()
+        return self.CRUD_action()
 
 
 class Signup(BaseHandler):
