@@ -12,14 +12,9 @@
 
     {% if session['username'] %}
     <div class='likes' id={{post.key | filterKey}} class='likes-total'>
-        <h4>{{post.likes|length}} people like this!</h4>
-        <form method='post'>
-            <!-- <input type='hidden' name='key' value='{{post.key | filterKey }}' />
-            <input type='hidden' name='action' value='add_like' />
-            <input type='submit' class='btn btn-default edit_comment btn-sm' value='Like'> -->
-            <input
-        </form>
-
+        <button class='upvote fa fa-angle-up'></button>
+        <h4><span>{{post.likes|length}}</span> people like this!</h4>
+        <button class='downvote fa fa-angle-down'></button>
     </div>
     {% endif %}
     <div class='comments'>

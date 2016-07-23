@@ -1,15 +1,12 @@
 body {
-  font-family: 'Titillium Web', sans-serif;
-  width: 800px;
-  margin: 0 auto;
-  padding: 5px;
+    font-family: 'Titillium Web', sans-serif;
+    width: 800px;
+    margin: 0 auto;
+    padding: 5px;
 }
-
-
 .error {
-  color: red;
+    color: red;
 }
-
 .jumbotron {
     margin-bottom: 0px;
     background-image: url(/img/nav.jpg);
@@ -17,61 +14,56 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
     color: white;
-
 }
-.display-1{
-  text-shadow: gray 0.1em 0.1em 0.1em;
+.display-1 {
+    text-shadow: gray 0.1em 0.1em 0.1em;
 }
-
 .article {
-  border: 2px solid #4195fc;
-  border-radius: 20px;
-  padding: 15px;
-  margin: 10px;
+    border: 2px solid #4195fc;
+    border-radius: 20px;
+    padding: 15px;
+    margin: 10px;
 }
-
 .post-title {
-  font-weight: bold;
-  font-size: 20px;
+    font-weight: bold;
+    font-size: 20px;
 }
-
 .post-message {
-  font-size: 15px;
+    font-size: 15px;
 }
-
 .created-at {
-  font-size: 12px;
+    font-size: 12px;
 }
-
 .likes {
-  font-size: 12px;
-  font-weight: bold;
+    font-size: 12px;
+    font-weight: bold;
 }
-
 .comments {
-  font-size: 12px;
-
+    font-size: 12px;
 }
-
 .hidden {
-  display: none;
+    display: none;
 }
-
 textarea {
-  width: 400px;
-  height: 300px;
-  font-size: 20px;
-  border: 2px solid #black;
-  border-radius: 7px
+    width: 400px;
+    height: 300px;
+    font-size: 20px;
+    border: 2px solid #black;
+    border-radius: 7px
 }
-
 input {
-  border: 2px solid #black;
-  border-radius: 7px
+    border: 2px solid #black;
+    border-radius: 7px
 }
-
 input:focus {
-    outline:none;
+    outline: none;
     border: 1px solid #4195fc;
     box-shadow: 0px 0px 5px #4195fc;
-  }
+}
+.upvote {
+    color: green;
+}
+
+.downvote {
+  color: red;
+}

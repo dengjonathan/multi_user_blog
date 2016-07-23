@@ -198,12 +198,14 @@ class CRUDHandler(BaseHandler):
         Helper method for CRUD updates. Converts AJAX request from JSON to
         datatypes useful for database access
         """
+        print '###', self.request.get('key')
         key = int(self.request.get('key'))
         action = self.request.get('action')
         data = self.request.get('data')
         post = ndb.Key('Post', key).get()
+        # gets user that is making CRUD action, NOT the original post author
         user = User.query().filter(
-            User.username == post.username
+            User.username == self.session.get('username')
         ).fetch()[0]
         return action, user, post, data
 
@@ -253,40 +255,37 @@ class CRUDHandler(BaseHandler):
         print 'crud action called'
         action, user, post, data = self.parse_AJAX()
         print action, user
-        getattr(self, action)(user, post, data)
-        key = str(filterKey(post.key))
-        return self.redirect('/')
+        return getattr(self, action)(user, post, data)
+
 
     # not CRUD methods
 
-    def add_like(action, user, post, data):
+    def add_like(self, user, post, *args):
         if filterKey(user.key) not in post.likes:
             post.likes.append(filterKey(user.key))
             post.put()
         if filterKey(post.key) not in user.likes:
             user.likes.append(filterKey(post.key))
             user.put()
-        # json_string = {'num_likes': len(post.likes)}
-        # print json_string
-        # return self.write(json.dumps(json_string))
+        return len(post.likes)
 
-    # def unlike(self, post, user, *args):
-    #     print 'this func'
-    #     curr_user = User.query().filter(
-    #         User.username == self.session.get('username')
-    #     ).fetch()[0]
-    #     post.likes = set(
-    #         [c for c in post.likes if c != filterKey(curr_user.key)]
-    #     )
-    #     post.put()
-    #     curr_user.likes = set(
-    #         [c for c in curr_user.likes if c != filterKey(post.key)]
-    #     )
-    #     user.put()
-    #     print len(post.likes)
-    #     # json_string = {'likes': post.likes,
-    #     #                'num_likes': len(post.likes)}
-    #     # return self.write(json.dumps(json_string))
+    def unlike(self, user, post, *args):
+        post.likes = set(
+            [c for c in post.likes if c != filterKey(user.key)]
+        )
+        post.put()
+        user.likes = set(
+            [c for c in user.likes if c != filterKey(post.key)]
+        )
+        user.put()
+        print post.likes
+        print len(post.likes)
+        return len(post.likes)
+
+    def post(self):
+        data = self.CRUD_action()
+        json_string = {'data': data}
+        return self.write(json.dumps(json_string))
 
 class MainPage(CRUDHandler):
 
@@ -447,6 +446,7 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/newpost', NewPost),
                                ('/logout', Logout),
                                ('/article', Article),
-                               ('/profile', Profile)],
+                               ('/profile', Profile),
+                               ('/post', CRUDHandler)],
                               config=config,
                               debug=True)
