@@ -4,7 +4,7 @@
         <h2><a href='/article?key={{post.key| filterKey}}'>{{post.title}}</a></h2>
     </div>
     <div class='post-author'>
-        <h3><a href='/article?key={{post.key| filterKey}}'>By {{post.username}} on {{post.created_at.date()}}</a></h3>
+        <h3><a>By {{post.username}} on {{post.created_at.date()}}</a></h3>
     </div>
     <div class='post-message'>
         {{post.message}}
@@ -56,5 +56,3 @@
     <button class='delete_article_form btn btn-primary btn-sm btn-danger'>Delete Post</button>
     {% endif %}
 </div>
-
-<script src='/scripts/upvote.js'></script>

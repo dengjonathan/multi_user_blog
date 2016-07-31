@@ -1,13 +1,17 @@
-{% extends 'base.html' %}
-{% block content %}
-  <script src='/scripts/like_comment.js'></script>
-<div class = 'row'>
-{% for post in posts %}
-<!-- Specify shape of each article container -->
-<div class="col-md-12">
-  {% include 'article_view_template.html' %}
+{% extends 'base.html' %} {% block content %}
+<div class='login-reminder error hidden'>
+  <p>
+    Not logged in? You need to login to register.
+  </p>
+  <a href = '/login'>Login</a>
+  <a href = '/register'>Register</a>
 </div>
-{% endfor %}
+<div class='row'>
+    {% for post in posts %}
+    <!-- Specify shape of each article container -->
+    <div class="col-md-12">
+        {% include 'article_view_template.html' %}
+    </div>
+    {% endfor %}
 </div>
-
 {% endblock %}

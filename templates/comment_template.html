@@ -1,5 +1,4 @@
 <li class='comment-container' id='{{comment.comment}}'>
-    <!-- Find way to make this not a link while in-line -->
     <a><span>{{comment.username}}</span> says <span class='comment'>{{comment.comment}}</span>!</a>
     {% if session['username'] %}
     <div class='edit_comment hidden'>
@@ -10,7 +9,8 @@
         <p>Are you sure you want to delete this comment?</p>
         <button class='delete_comment btn btn-default btn-sm'>Delete</button>
     </div>
-    <button class='btn btn-default edit_form btn-sm'>Edit</button>
-    <button class='btn btn-default delete_form btn-sm'>Delete</button>
+    
+    <button class='edit_comment_form btn btn-default btn-sm'>Edit</button>
+    <button class='delete_comment_form btn btn-default btn-sm'>Delete</button>
     {% endif %}
 </li>

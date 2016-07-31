@@ -131,8 +131,9 @@ class User(ndb.Model):
     # this is a list of integer keys for every article that the user 'liked'
     likes = ndb.IntegerProperty(repeated=True)
 
-
 # Decorator functions for request Handlers
+
+
 def login_required(func):
     def func_wrapper(*args, **kwargs):
         self = args[0]
@@ -143,16 +144,14 @@ def login_required(func):
             return func(*args, **kwargs)
     return func_wrapper
 
-
+# TODO this compares editor to editor, need to find creator of object
 def permissions_check(func):
     """checks if user is creator of object"""
-    def func_wrapper(*args, **kwargs):
+    def func_wrapper(user, creator, *args, **kwargs):
         self = args[0]
         username = args[1].username
         if self.session['username'] != username:
-            # TODO what do you do if user doesn't have permission?
             error = 'You don\'t have permission to edit this object!'
-            print error
             warnings.warn(error)
             return self.get(error=error)
         else:
@@ -191,7 +190,28 @@ class BaseHandler(webapp2.RequestHandler):
 
 
 class CRUDHandler(BaseHandler):
-    """Class that contains all CRUD methods"""
+    """
+    Handler for all CRUD methods
+
+    When JS script sends AJAX post requests, this hand will update the ndb
+    models accordingly and send AJAX response back to client, which will update
+    the view.
+    """
+
+    @login_required
+    def post(self):
+        """
+        Parses AJAX request, updates database based on request.action and
+        send response to client
+        """
+        action, user, post, data = self.parse_AJAX()
+        if 'comment' in action:
+            creator = comment.username
+        else:
+            creator = post.user
+        data = getattr(self, action)(user, post, data, creator)
+        json_string = {'data': data}
+        return self.write(json.dumps(json_string))
 
     def parse_AJAX(self):
         """
@@ -201,9 +221,8 @@ class CRUDHandler(BaseHandler):
         key = int(self.request.get('key'))
         action = self.request.get('action')
         data = self.request.get('data')
-        print '###data', data
         post = ndb.Key('Post', key).get()
-        # gets user that is making CRUD action, NOT the original post author
+        # gets user making CRUD action, NOT the original post author
         user = User.query().filter(
             User.username == self.session.get('username')
         ).fetch()[0]
@@ -211,17 +230,17 @@ class CRUDHandler(BaseHandler):
 
     def new_comment(self, user, post, data, *args):
         comment = Comment(username=user.username, comment=data)
-        print comment
         post.comments.append(comment)
         post.put()
         index = post.comments.index(comment)
-        print index
+        # render html string for a new comment div to be appended to DOM
         return self.render_str('comment_template.html', post=post,
                                comment=comment, session=self.session)
 
     @permissions_check
     def edit_comment(self, user, post, data, *args):
-        comment = [c for c in post.comments if c.comment == self.request.get('comment_index')][0]
+        comment = [c for c in post.comments if c.comment ==
+                   self.request.get('comment_index')][0]
         comment.comment = data
         post.put()
         return
@@ -234,7 +253,6 @@ class CRUDHandler(BaseHandler):
 
     @permissions_check
     def edit_article(self, user, post, data, *args):
-        print '### called'
         post.title = data
         post.message = self.request.get('message')
         post.put()
@@ -244,16 +262,6 @@ class CRUDHandler(BaseHandler):
     def delete_article(self, user, post, *args):
         post.key.delete()
         return
-
-    # function that will call correct method above using request inputs
-    @login_required
-    def CRUD_action(self):
-        print 'crud action called'
-        action, user, post, data = self.parse_AJAX()
-        print action, user
-        return getattr(self, action)(user, post, data)
-
-    # not CRUD methods
 
     def add_like(self, user, post, *args):
         if filterKey(user.key) not in post.likes:
@@ -273,14 +281,7 @@ class CRUDHandler(BaseHandler):
             [c for c in user.likes if c != filterKey(post.key)]
         )
         user.put()
-        print post.likes
-        print len(post.likes)
         return len(post.likes)
-
-    def post(self):
-        data = self.CRUD_action()
-        json_string = {'data': data}
-        return self.write(json.dumps(json_string))
 
 
 class MainPage(BaseHandler):
