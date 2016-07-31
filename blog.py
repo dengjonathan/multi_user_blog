@@ -198,10 +198,10 @@ class CRUDHandler(BaseHandler):
         Helper method for CRUD updates. Converts AJAX request from JSON to
         datatypes useful for database access
         """
-        print '###', self.request.get('key')
         key = int(self.request.get('key'))
         action = self.request.get('action')
         data = self.request.get('data')
+        print '###data', data
         post = ndb.Key('Post', key).get()
         # gets user that is making CRUD action, NOT the original post author
         user = User.query().filter(
@@ -210,44 +210,40 @@ class CRUDHandler(BaseHandler):
         return action, user, post, data
 
     def new_comment(self, user, post, data, *args):
-        n = Comment(username=user.username,
-                    comment=data)
-        post.comments.append(n)
+        comment = Comment(username=user.username, comment=data)
+        print comment
+        post.comments.append(comment)
         post.put()
-        key = str(filterKey(post.key))
-        return self.redirect('/article?key=' + key)
+        index = post.comments.index(comment)
+        print index
+        return self.render_str('comment_template.html', post=post,
+                               comment=comment, session=self.session)
 
     @permissions_check
     def edit_comment(self, user, post, data, *args):
-        new_comment = self.request.get('edit_comment')
-        old_comment = self.request.get('data')
-        print '###', old_comment, new_comment
-        comment = [c for c in post.comments if c.comment == old_comment][0]
-        index = post.comments.index(comment)
-        post.comments[index].comment = new_comment
+        comment = [c for c in post.comments if c.comment == self.request.get('comment_index')][0]
+        comment.comment = data
         post.put()
-        key = str(filterKey(post.key))
-        return self.redirect('/article?key=' + key)
+        return
 
     @permissions_check
     def delete_comment(self, user, post, data, *args):
         post.comments = [c for c in post.comments if c.comment != data]
         post.put()
+        return
 
     @permissions_check
     def edit_article(self, user, post, data, *args):
         print '### called'
-        post.message = data
-        post.title = self.request.get('title')
+        post.title = data
+        post.message = self.request.get('message')
         post.put()
-        action = self.request.get('action')
-        return self.redirect('/article?key=' + str(filterKey(post.key)))
+        return
 
     @permissions_check
     def delete_article(self, user, post, *args):
-        print 'delete method called'
         post.key.delete()
-        return self.redirect('/')
+        return
 
     # function that will call correct method above using request inputs
     @login_required
@@ -256,7 +252,6 @@ class CRUDHandler(BaseHandler):
         action, user, post, data = self.parse_AJAX()
         print action, user
         return getattr(self, action)(user, post, data)
-
 
     # not CRUD methods
 
@@ -287,15 +282,13 @@ class CRUDHandler(BaseHandler):
         json_string = {'data': data}
         return self.write(json.dumps(json_string))
 
-class MainPage(CRUDHandler):
+
+class MainPage(BaseHandler):
 
     def get(self, error=''):
         posts = Post.query().order(-Post.created_at)
         self.render('home.html', posts=posts,
                     error=error, session=self.session)
-
-    def post(self):
-        return self.CRUD_action()
 
 
 class Signup(BaseHandler):
@@ -403,16 +396,12 @@ class NewPost(CRUDHandler):
                         session=self.session, num=num)
 
 
-class Article(CRUDHandler):
+class Article(BaseHandler):
 
     def get(self):
         key = int(self.request.get('key'))
         post = ndb.Key('Post', key).get()
         self.render('article.html', session=self.session, post=post)
-
-    @login_required
-    def post(self):
-        return self.CRUD_action()
 
 
 class Profile(BaseHandler):

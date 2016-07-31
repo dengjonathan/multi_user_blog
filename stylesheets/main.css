@@ -61,9 +61,10 @@ input:focus {
     box-shadow: 0px 0px 5px #4195fc;
 }
 .upvote {
+    margin: 0 auto;
     color: green;
 }
-
 .downvote {
-  color: red;
+    margin: 0 auto;
+    color: red;
 }
