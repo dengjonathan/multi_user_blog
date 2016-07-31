@@ -10,8 +10,11 @@ $(document).ready(function() {
     $('div.login-reminder').removeClass('hidden');
   }
 
-  function alertError() {
-    $('.error').text('Last user action failed- please try again.');
+  function alertError(error) {
+    error = error.responseText.split('raise Exception(error)')[1]
+      .split('</pre>')[0];
+      console.log(error);
+    $('.error').text(error);
   }
 
   $('button.upvote').click(function() {
@@ -44,7 +47,7 @@ $(document).ready(function() {
         $(likes).html(JSON.parse(response).data);
       })
       .fail(function(error) {
-        alertError();
+        alertError(error);
       });
   });
 
@@ -64,24 +67,27 @@ $(document).ready(function() {
     $('button.update-comment').click(function() {
       var key = $(this).parents('div.article-container').attr('id');
       var comment_index = $(this).parents('li.comment-container').attr('id');
-      var comment = $(this).prev('input');
+      var new_comment = $(this).prev('input').val();
       var data = {
         key: key,
         action: 'edit_comment',
-        data: $(comment).val(),
-        comment_index: comment_index
+        data: comment_index,
+        new_comment: new_comment,
       };
       var comment_text = $(this).parents('li.comment-container').find('span.comment');
       $(this).next('button.delete_comment_form').toggleClass('hidden');
       $.post('/post', data)
         .success(function(response) {
-          $(comment_text).text($(comment).val());
+          $(comment_text).text(new_comment);
           $(edit_form).toggleClass('hidden');
           $(edit_form_btn).text($(edit_form_btn).text() == 'Edit' ? 'Cancel' : 'Edit');
-          delete_form_btn.toggleClass('hidden');
+          $(delete_form_btn).toggleClass('hidden');
         })
         .fail(function(error) {
-          alertError();
+          alertError(error);
+          $(edit_form).toggleClass('hidden');
+          $(edit_form_btn).text($(edit_form_btn).text() == 'Edit' ? 'Cancel' : 'Edit');
+          $(delete_form_btn).toggleClass('hidden');
         });
     });
 
@@ -115,7 +121,7 @@ $(document).ready(function() {
           $(comment).remove();
         })
         .fail(function(error) {
-          alertError();
+          alertError(error);
         });
     });
   })();
@@ -156,7 +162,10 @@ $(document).ready(function() {
           $(delete_form_btn).toggleClass('hidden');
         })
         .fail(function(error) {
-          alertError();
+          alertError(error);
+          $(edit_form).toggleClass('hidden');
+          $(edit_form_btn).text($(edit_form_btn).text() == 'Edit Post' ? 'Cancel' : 'Edit Post');
+          $(delete_form_btn).toggleClass('hidden');
         });
     });
   })();
@@ -179,7 +188,7 @@ $(document).ready(function() {
         $(article_node).remove();
       })
       .fail(function(error) {
-        alertError();
+        alertError(error);
       });
   });
 
@@ -197,11 +206,12 @@ $(document).ready(function() {
       .success(function(response) {
         // post method will return new comment html template as response
         // append template to ul.comment_list DOM node
+        // FIXME: when adding comment template, none of buttons work
         $(list).append(JSON.parse(response).data);
         $(input).val('');
       })
       .fail(function(error) {
-        alertError();
+        alertError(error);
       });
   });
 });

@@ -144,18 +144,19 @@ def login_required(func):
             return func(*args, **kwargs)
     return func_wrapper
 
-# TODO this compares editor to editor, need to find creator of object
 def permissions_check(func):
     """checks if user is creator of object"""
-    def func_wrapper(user, creator, *args, **kwargs):
-        self = args[0]
-        username = args[1].username
-        if self.session['username'] != username:
+    def func_wrapper(self, user, post, data, creator, *args, **kwargs):
+        print 'user '
+        print user.username
+        print 'creator'
+        print creator
+        if user.username != creator:
             error = 'You don\'t have permission to edit this object!'
             warnings.warn(error)
-            return self.get(error=error)
+            raise Exception(error)
         else:
-            return func(*args, **kwargs)
+            return func(self, user, post, data, creator, *args, **kwargs)
     return func_wrapper
 
 # webapp2 Request Handlers
@@ -205,10 +206,12 @@ class CRUDHandler(BaseHandler):
         send response to client
         """
         action, user, post, data = self.parse_AJAX()
-        if 'comment' in action:
+        if 'edit_comment or delete_comment' in action:
+            comment = [c for c in post.comments if c.comment ==
+                       self.request.get('data')][0]
             creator = comment.username
         else:
-            creator = post.user
+            creator = post.username
         data = getattr(self, action)(user, post, data, creator)
         json_string = {'data': data}
         return self.write(json.dumps(json_string))
@@ -239,10 +242,11 @@ class CRUDHandler(BaseHandler):
 
     @permissions_check
     def edit_comment(self, user, post, data, *args):
-        comment = [c for c in post.comments if c.comment ==
-                   self.request.get('comment_index')][0]
-        comment.comment = data
-        post.put()
+        comment = [c for c in post.comments if c.comment == data]
+        if comment:
+            comment = comment[0]
+            comment.comment = self.request.get('new_comment')
+            post.put()
         return
 
     @permissions_check

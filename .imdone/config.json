@@ -24,6 +24,10 @@
     {
       "name": "TODO",
       "hidden": false
+    },
+    {
+      "name": "FIXME",
+      "hidden": false
     }
   ],
   "marked": {
